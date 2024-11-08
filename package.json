@@ -1,0 +1,21 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@nuxtjs/google-fonts": "^3.2.0",
+    "firebase": "^11.0.1",
+    "nuxt": "^3.13.2",
+    "nuxt-vuefire": "^1.0.4",
+    "vue": "latest",
+    "vue-router": "latest",
+    "vuefire": "^3.2.0"
+  }
+}
