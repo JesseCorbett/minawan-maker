@@ -16,7 +16,7 @@ const showContact = ref(false);
       <p>I'm a professional software engineer and enjoy working on projects for communities and creators.</p>
       <h4>Volunteering</h4>
       <p>Community leader or creator and have a project idea? Reach out!</p>
-      <p>When I'm on a project, I'm work strictly in a professional and private manner, you're my client first and foremost.</p>
+      <p>When I'm on a project, I work strictly in a professional and private manner, you're my client first and foremost.</p>
       <p>
         You can contact me at <span>hoopy.</span> on Discord and find my professional qualifications and contact
         information on <a href="https://jessecorbett.com/">my homepage</a>.
