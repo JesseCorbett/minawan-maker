@@ -22,7 +22,7 @@ const showContact = ref(false);
       </p>
       <p>
         You can contact me at <span>hoopy.</span> on Discord and find my professional qualifications and contact
-        information on <a href="https://jessecorbett.com/">my homepage</a>.
+        information on <a href="https://jessecorbett.com/">my portfolio</a>.
       </p>
       <p>Be sure to tell me which community you come from and your project needs.</p>
       <h4>Credits</h4>
