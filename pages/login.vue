@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { OAuthProvider, signInWithRedirect, getRedirectResult } from "firebase/auth";
+import { OAuthProvider, signInWithRedirect, signInWithPopup, getRedirectResult } from "firebase/auth";
 import { definePageMeta } from "#imports";
 
 definePageMeta({
@@ -14,15 +14,18 @@ const error = ref<string>()
 function login() {
   const provider = new OAuthProvider('oidc.discord');
   provider.addScope("identify")
-  provider.addScope("guilds")
+  provider.addScope("openid")
+  provider.addScope("connections")
+
 
   signInWithRedirect(auth, provider)
 }
 
 onMounted(async () => {
   try {
-    await getRedirectResult(auth)
-    await router.push("/")
+    const result = await getRedirectResult(auth)
+    console.log(result)
+    //await router.push("/")
   } catch (e) {
     error.value = 'There was an error signing in'
   }
