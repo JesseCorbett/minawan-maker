@@ -16,6 +16,8 @@ const props = defineProps<{
   accessories?: Accessories[]
 }>()
 
+const user = useCurrentUser();
+
 const eyes = ref<Eyes>(props.eyes)
 const eyeColor = ref(props.eyeColor)
 const bodyLight = ref(props.bodyLight)
@@ -57,6 +59,10 @@ function toggleAccessory(accessory: Accessories) {
   } else {
     activeAccessories.value = [...activeAccessories.value, accessory]
   }
+}
+
+async function saveMinasona() {
+  alert('This function is still under development, sorry!');
 }
 </script>
 
@@ -166,7 +172,8 @@ function toggleAccessory(accessory: Accessories) {
       </div>
     </div>
     <div id="save">
-      <a :href="dataUrl" download="minasona.png">Save</a>
+      <a :href="dataUrl" download="minasona.png">Download</a>
+      <a v-if="!!user" @click="saveMinasona">Set as Minasona</a>
     </div>
   </div>
 </template>
@@ -209,9 +216,12 @@ function toggleAccessory(accessory: Accessories) {
   grid-column: span 1;
   width: 100%;
   padding: 16px 8px 0;
+  display: flex;
+  gap: 4px;
 }
 
 #save a {
+  cursor: pointer;
   background: var(--cerb-light);
   color: white;
   padding: 4px 8px;

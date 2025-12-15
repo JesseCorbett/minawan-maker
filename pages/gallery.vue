@@ -1,28 +1,20 @@
 <script setup lang="ts">
-const auth = useFirebaseAuth()!
-const user = useCurrentUser();
-
-async function uploadMinasona() {
-  alert('This function is still under development, sorry!')
-}
-
-async function logout() {
-  await auth.signOut();
-}
+import { definePageMeta } from "#imports";
+import MinawanBox from "~/components/MinawanBox.vue";
 
 const showContact = ref(false);
+
+definePageMeta({
+  layout: 'purple'
+})
 </script>
 
 <template>
-  <div style="display: flex; flex-direction: column; align-items: center">
-    <h1>Make a Minawan!!</h1>
-    <div id="links">
-      <NuxtLink id="to-gallery" to="/gallery">View Minawan Gallery</NuxtLink>
-      <div v-if="!!user" @click="uploadMinasona">Upload Minasona</div>
-      <NuxtLink v-if="!user" to="/login">Login</NuxtLink>
-      <div v-if="!!user" id="logout" @click="logout">Logout</div>
+  <div style="width: 100%">
+    <h1>Minawan Gallery</h1>
+    <div id="gallery">
+      <MinawanBox/>
     </div>
-    <MinawanMaker body-light="#b8a099" body-shaded="#a18981" outline="#000000" mouth="#000000" eye-color="#000000" eyes="o"/>
     <div id="credit">
       <div id="info" @mouseover="showContact = true">ⓘ</div>
     </div>
@@ -50,35 +42,15 @@ const showContact = ref(false);
 </template>
 
 <style scoped>
-#links {
-  display: flex;
-  gap: 8px;
-}
+#gallery {
+  --minawan-box-size: 200px;
 
-#links > * {
-  text-decoration: none;
-  background-color: var(--cerb-dark);
-  color: white;
-  font-family: sans-serif;
-  font-size: 16px;
-  margin: -24px auto 16px;
-  padding: 4px 6px;
-  border: 4px solid var(--cerb-dark);
-  border-radius: 12px;
-  cursor: pointer;
-}
-
-#links > *:hover {
-  background: var(--cerb-light);
-}
-
-#logout {
-  background: white;
-  color: var(--cerb-dark);
-}
-
-#logout:hover {
-  background: white;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, var(--minawan-box-size, 200px));
+  gap: 24px;
+  align-content: start;
+  justify-content: space-evenly;
 }
 
 #credit {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { type Eyes } from "~/components/Minawan.vue";
-import type { Accessories } from "~/components/MinawanMaker.vue";
+import type { Accessories } from "~/components/MinawanCanvas.vue";
 
 const colors = [
   ['#cab5d6', '#bea3d0'],
