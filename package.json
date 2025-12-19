@@ -17,6 +17,5 @@
     "vue": "latest",
     "vue-router": "latest",
     "vuefire": "^3.2.2"
-  },
-  "packageManager": "pnpm@10.25.0"
+  }
 }

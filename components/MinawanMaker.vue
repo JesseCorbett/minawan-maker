@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Eyes } from "~/components/Minawan.vue";
 import type { Accessories } from "~/components/MinawanCanvas.vue";
+import { ref as storageRef } from "firebase/storage";
 
 onMounted(() => {
   jscolor.install()
@@ -16,6 +17,7 @@ const props = defineProps<{
   accessories?: Accessories[]
 }>()
 
+const storage = useFirebaseStorage();
 const user = useCurrentUser();
 
 const eyes = ref<Eyes>(props.eyes)
@@ -61,15 +63,36 @@ function toggleAccessory(accessory: Accessories) {
   }
 }
 
+const uploadPath = computed(() => {
+  if (user.value) {
+    return `minawan/${user.value!.uid}/minasona.png`;
+  }
+});
+
+const uploadRef = computed(() => {
+  if (uploadPath.value) {
+    return storageRef(storage, uploadPath.value);
+  }
+});
+
+const { upload, uploadProgress } = useStorageFile(uploadRef);
+
+async function uploadMinasona(base64: string) {
+  const response = await fetch(base64);
+  const blob = await response.blob();
+  upload(blob);
+}
+
 async function saveMinasona() {
-  alert('This function is still under development, sorry!');
+  if (!dataUrl.value) return;
+  await uploadMinasona(dataUrl.value);
 }
 </script>
 
 <template>
   <div id="minawan-maker">
     <MinawanCanvas
-        :width="500"
+        :width="512"
         :body-light="bodyLight"
         :body-shaded="bodyShaded"
         :outline="outline"
@@ -173,7 +196,7 @@ async function saveMinasona() {
     </div>
     <div id="save">
       <a :href="dataUrl" download="minasona.png">Download</a>
-      <a v-if="!!user" @click="saveMinasona">Set as Minasona</a>
+      <a v-if="!!user" @click="saveMinasona">{{ uploadProgress ? `Uploaded ${Math.ceil(uploadProgress * 100)}%` : 'Set as minasona' }}</a>
     </div>
   </div>
 </template>
@@ -222,13 +245,19 @@ async function saveMinasona() {
 
 #save a {
   cursor: pointer;
-  background: var(--cerb-light);
+  background: var(--cerb-dark);
   color: white;
-  padding: 4px 8px;
+  font-size: 16px;
+  padding: 4px 6px;
   font-family: sans-serif;
-  border-radius: 4px;
+  border-radius: 12px;
   user-select: none;
   text-decoration: none;
+  border: 4px solid var(--cerb-dark);
+}
+
+#save a:hover {
+  background: var(--cerb-light);
 }
 
 @media (min-width: 1280px) {

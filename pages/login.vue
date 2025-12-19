@@ -97,11 +97,11 @@ async function loginTwitch() {
     <Title>Login</Title>
     <h1>Login</h1>
     <p>
-      Logging in allows you to upload your creations to the Minawan Gallery and update your details for the Minawan community API,
+      Logging in allows you to upload your minasona to the Minawan Gallery and update your details for the Minawan Community API,
       which is used by projects like the Minasona Twitch extension.
       <br/>
       <br/>
-      We only access your public Discord info to log you in and also automatically synchronize your Twitch username if you have linked it with your Discord account.
+      We only access your Discord ID to log you in and if you have linked your Twitch account to Discord we will automatically import your Twitch username for the API. We do not have access to any other type of information.
     </p>
     <button @click="loginDiscord">
       <img src="~/assets/discord.svg" alt="Discord logo" width="28" height="28"/>

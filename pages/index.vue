@@ -1,16 +1,48 @@
 <script setup lang="ts">
+import { ref as storageRef } from 'firebase/storage'
+const storage = useFirebaseStorage();
 const auth = useFirebaseAuth()!
 const user = useCurrentUser();
-
-async function uploadMinasona() {
-  alert('This function is still under development, sorry!')
-}
 
 async function logout() {
   await auth.signOut();
 }
 
 const showContact = ref(false);
+
+const uploadPath = computed(() => {
+  if (user.value) {
+    return `minawan/${user.value!.uid}/minasona.png`;
+  }
+});
+
+const uploadRef = computed(() => {
+  if (uploadPath.value) {
+    return storageRef(storage, uploadPath.value);
+  }
+});
+
+const { upload, uploadProgress } = useStorageFile(uploadRef);
+
+async function uploadMinasona(base64: string) {
+  const response = await fetch(base64);
+  const blob = await response.blob();
+  upload(blob);
+}
+
+async function checkFileInput(event: InputEvent) {
+  const fileInput = event.target as HTMLInputElement;
+  const file = fileInput.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64 = e.target?.result as string;
+    await uploadMinasona(base64);
+  };
+  reader.readAsDataURL(file);
+
+}
 </script>
 
 <template>
@@ -18,11 +50,23 @@ const showContact = ref(false);
     <h1>Make a Minawan!!</h1>
     <div id="links">
       <NuxtLink id="to-gallery" to="/gallery">View Minawan Gallery</NuxtLink>
-      <div v-if="!!user" @click="uploadMinasona">Upload Minasona</div>
+      <label v-if="!!user" for="upload-minawan-file">{{ uploadProgress ? `Uploaded ${Math.ceil(uploadProgress * 100)}%` : 'Upload Minasona' }}</label>
+      <input
+          id="upload-minawan-file"
+          type="file"
+          accept="image/*"
+          style="display: none"
+          @change="checkFileInput"/>
       <NuxtLink v-if="!user" to="/login">Login</NuxtLink>
       <div v-if="!!user" id="logout" @click="logout">Logout</div>
     </div>
-    <MinawanMaker body-light="#b8a099" body-shaded="#a18981" outline="#000000" mouth="#000000" eye-color="#000000" eyes="o"/>
+    <MinawanMaker
+        body-light="#b8a099"
+        body-shaded="#a18981"
+        outline="#000000"
+        mouth="#000000"
+        eye-color="#000000"
+        eyes="o"/>
     <div id="credit">
       <div id="info" @mouseover="showContact = true">ⓘ</div>
     </div>

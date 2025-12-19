@@ -12,6 +12,7 @@ body {
   --pink: #ec7fbb;
   --yellow: #FADFB7;
   --black: #322E43;
+  background-color: var(--cerb-dark);
 }
 
 h1, h2 {
