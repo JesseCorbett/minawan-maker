@@ -6,15 +6,15 @@ import { getFirestore } from "firebase-admin/firestore";
 
 initializeApp();
 
-setGlobalOptions({ maxInstances: 1 });
+setGlobalOptions({maxInstances: 1});
 
-export const updateJsonCatalog = onObjectFinalized({ bucket: "minawan-pics.firebasestorage.app" }, async (event) => {
+export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.firebasestorage.app"}, async (event) => {
     const storage = getStorage();
     const db = getFirestore();
     const bucket = storage.bucket(event.bucket);
 
     // 1. Get all items in the bucket at path /minawan/{userId}/*
-    const [files] = await bucket.getFiles({ prefix: 'minawan/' });
+    const [files] = await bucket.getFiles({prefix: 'minawan/'});
 
     const usersData: Record<string, any> = {};
 
@@ -55,7 +55,7 @@ export const updateJsonCatalog = onObjectFinalized({ bucket: "minawan-pics.fireb
 
         // 3. Generate a json list of {twitchUsername, minasona, minasona_(format)_256, minasona_(format)_512, minasona_(format)_64}
         // where the minasona fields are the match publicly accessible URL for the respective image
-        
+
         // Expected files:
         // minasona.png, minasona_256x256.avif, minasona_256x256.png, minasona_512x512.avif, minasona_512x512.png, minasona_64x64.avif, minasona_64x64.png
 
@@ -89,8 +89,9 @@ export const updateJsonCatalog = onObjectFinalized({ bucket: "minawan-pics.fireb
     }
 
     // 4. Upload the json file to the bucket at /minawan/gallery.json
-    await bucket.file('minawan/gallery.json').save(JSON.stringify(catalog), {
-        contentType: 'application/json',
-        public: true
+    const galleryFile = bucket.file('minawan/gallery.json')
+    await galleryFile.save(JSON.stringify(catalog), {
+        contentType: 'application/json'
     });
+    await galleryFile.makePublic();
 });

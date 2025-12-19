@@ -10,6 +10,7 @@ definePageMeta({
 </script>
 
 <template>
+  <Title>Minawan Gallery</Title>
   <div style="width: 100%">
     <h1>Minawan Gallery</h1>
     <div id="gallery">
