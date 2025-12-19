@@ -26,6 +26,9 @@ const minasonaGallery = computed(() => data.value?.filter((entry: any) => entry.
 
 <template>
   <Title>Minawan Gallery</Title>
+  <Meta name="og:title" content="Minawan Gallery"/>
+  <Meta name="og:description" content="View all the Minawan that have shared their minasona with the community and access them for your own projects"/>
+  <Meta name="description" content="View all the Minawan that have shared their minasona with the community and access them for your own projects"/>
   <div style="width: 100%">
     <h1>Minawan Gallery</h1>
     <div id="links">

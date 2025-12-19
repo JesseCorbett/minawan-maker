@@ -20,7 +20,8 @@ export default defineNuxtConfig({
       meta: [
         { property: 'og:title', content: 'Minawan.me' },
         { property: 'og:image', content: '/minawan.png' },
-        { property: 'og:description', content: 'Make your own custom Minawan!' }
+        { property: 'og:description', content: 'Make and share your own custom Minasona!' },
+        { name: 'description', content: 'Make and share your own custom Minasona!' }
       ]
     }
   },
