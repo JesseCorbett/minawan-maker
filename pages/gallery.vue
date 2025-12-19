@@ -1,20 +1,47 @@
 <script setup lang="ts">
 import { definePageMeta } from "#imports";
 import MinawanBox from "~/components/MinawanBox.vue";
+import { useCurrentUser } from "vuefire";
 
 const showContact = ref(false);
 
 definePageMeta({
   layout: 'purple'
-})
+});
+
+const user = useCurrentUser();
+
+type Minasona = {
+  id?: string;
+  twitchUsername?: string;
+  minasonaAvif256: string;
+}
+
+const {data} = await useFetch<Minasona[]>('https://storage.googleapis.com/minawan-pics.firebasestorage.app/minawan%2Fgallery.json');
+
+const userMinasona = computed(() => data.value?.find((entry: any) => entry.id === user.value?.uid));
+
+const minasonaGallery = computed(() => data.value?.filter((entry: any) => entry.id !== user.value?.uid));
 </script>
 
 <template>
   <Title>Minawan Gallery</Title>
   <div style="width: 100%">
     <h1>Minawan Gallery</h1>
+    <div id="links">
+      <NuxtLink to="/">Make or Upload your own Minawan</NuxtLink>
+      <a id="api" href="https://minawan.me/gallery.json" target="gallery-api">Minawan API</a>
+    </div>
     <div id="gallery">
-      <MinawanBox/>
+      <MinawanBox
+          v-if="userMinasona"
+          :twitch-username="userMinasona.twitchUsername"
+          :url="userMinasona.minasonaAvif256"/>
+      <MinawanBox
+          v-for="entry in minasonaGallery"
+          :key="entry.id || entry.minasonaAvif256"
+          :twitch-username="entry.twitchUsername"
+          :url="entry.minasonaAvif256"/>
     </div>
     <div id="credit">
       <div id="info" @mouseover="showContact = true">ⓘ</div>
@@ -52,6 +79,38 @@ definePageMeta({
   gap: 24px;
   align-content: start;
   justify-content: space-evenly;
+}
+
+#links {
+  display: flex;
+  margin: 0 auto 32px;
+  width: fit-content;
+  gap: 16px;
+}
+
+#links > * {
+  display: block;
+  width: fit-content;
+  background-color: var(--pink);
+  color: white;
+  font-family: sans-serif;
+  font-size: 16px;
+  text-decoration: none;
+  padding: 4px 6px;
+  border: 4px solid var(--pink);
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+#links > *:hover {
+  border-color: var(--black);
+}
+
+@media screen and (max-width: 600px) {
+  #api {
+    display: none;
+  }
 }
 
 #credit {

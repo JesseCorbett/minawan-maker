@@ -1,28 +1,30 @@
 <script setup lang="ts">
 export interface MinawanInfo {
-  userId: string;
-  name: string;
+  twitchUsername?: string;
   url: string;
 }
 
-defineProps<{
-  minawan?: MinawanInfo
-}>()
+defineProps<MinawanInfo>();
 </script>
 
 <template>
   <div class="minawan-box">
-    <div v-if="minawan">
-      {{ minawan }}
-    </div>
-    <NuxtLink to="/" class="to-maker" v-else>
-      Upload or make your own Minawan
-    </NuxtLink>
+    <img
+        :src="url"
+        :alt="twitchUsername || 'A minawan'"
+        style="width: 100%; height: 100%; object-fit: cover"
+        draggable="false"
+    />
+    <span v-if="twitchUsername">
+      <img src="~/assets/twitch.svg" alt="Twitch logo" width="20" height="20"/>
+      {{ twitchUsername || 'Unnamed Minawan' }}
+    </span>
   </div>
 </template>
 
 <style scoped>
 .minawan-box {
+  position: relative;
   border: 5px solid var(--black);
   background-color: var(--yellow);
   border-radius: 25px;
@@ -34,18 +36,35 @@ defineProps<{
   align-items: center;
 }
 
-.to-maker {
-  font-family: sans-serif;
-  font-weight: 500;
-  font-size: 24px;
-  color: var(--black);
-  text-align: center;
+.minawan-box > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   user-select: none;
-  cursor: pointer;
-  text-decoration: none;
 }
 
-.to-maker:hover {
+.minawan-box > span {
+  font-family: sans-serif;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
   font-weight: 600;
+  user-select: all;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  gap: 6px;
+}
+
+.minawan-box > span > img {
+  aspect-ratio: 1;
+  background-color: var(--twitch-purple);
+  padding: 10px 6px 8px 10px;
+  user-select: none;
 }
 </style>

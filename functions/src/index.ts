@@ -43,9 +43,10 @@ export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.fireba
             await file.setMetadata({cacheControl: 'Cache-Control:public, max-age=3600, s-maxage=600'});
         }
 
-        // 3. Generate a json list of {twitchUsername, minasona, minasona_(format)_256, minasona_(format)_512, minasona_(format)_64}
+        // 3. Generate a JSON list of {id, twitchUsername, minasona, minasona_(format)_256, minasona_(format)_512, minasona_(format)_64}
         // where the minasona fields are the match publicly accessible URL for the respective image
         const entry: any = {
+            id: userId,
             twitchUsername,
             minasona: getPublicUrl(file.name),
             minasonaAvif256: getPublicUrl(`minawan/${userId}/minasona_256x256.avif`),
@@ -65,7 +66,8 @@ export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.fireba
         contentType: 'application/json',
         public: true,
         metadata: {
-            cacheControl: 'public, max-age=0, s-maxage=0'
+            cacheControl: 'public, max-age=0, s-maxage=0',
+
         }
     });
 });

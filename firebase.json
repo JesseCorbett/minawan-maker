@@ -22,6 +22,17 @@
         "destination": "https://storage.googleapis.com/minawan-pics.firebasestorage.app/minawan%2Fgallery.json",
         "type": 301
       }
+    ],
+    "headers": [
+      {
+        "source": "gallery.json",
+        "headers": [
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "*"
+          }
+        ]
+      }
     ]
   },
   "storage": {

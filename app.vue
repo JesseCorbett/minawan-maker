@@ -12,6 +12,7 @@ body {
   --pink: #ec7fbb;
   --yellow: #FADFB7;
   --black: #322E43;
+  --twitch-purple: #9146FF;
   background-color: var(--cerb-dark);
 }
 
