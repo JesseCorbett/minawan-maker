@@ -3,10 +3,18 @@ import { onObjectFinalized } from 'firebase-functions/storage';
 import { initializeApp } from "firebase-admin/app";
 import { getStorage } from "firebase-admin/storage";
 import { getFirestore } from "firebase-admin/firestore";
+import * as backfill from './minawanTwitch.json';
 
 initializeApp();
 
 setGlobalOptions({maxInstances: 1});
+
+type MinawanBackfill = {
+    twitchUsername: string;
+    minasonaName: string;
+}
+
+backfill as MinawanBackfill[];
 
 export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.firebasestorage.app"}, async (event) => {
     if (!event.data.name.endsWith('/minasona.png')) return;
@@ -58,6 +66,12 @@ export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.fireba
         };
 
         catalog.push(entry);
+    }
+
+    for (const backfillEntry of backfill) {
+        if (!catalog.some((entry) => entry.twitchUsername === backfillEntry.twitchUsername)) {
+            // catalog.push({ twitchUsername: backfillEntry.twitchUsername, minasona: backfillEntry.minasonaName });
+        }
     }
 
     // 4. Upload the json file to the bucket at /minawan/gallery.json

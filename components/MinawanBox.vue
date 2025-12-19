@@ -49,7 +49,7 @@ defineProps<MinawanInfo>();
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.4);
   color: white;
   font-weight: 600;
   user-select: all;
