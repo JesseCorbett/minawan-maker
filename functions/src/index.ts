@@ -3,6 +3,7 @@ import { onObjectFinalized } from 'firebase-functions/storage';
 import { initializeApp } from "firebase-admin/app";
 import { getStorage } from "firebase-admin/storage";
 import { getFirestore } from "firebase-admin/firestore";
+import * as crypto from "crypto";
 
 initializeApp();
 
@@ -47,8 +48,10 @@ export const updateJsonCatalog = onObjectFinalized({ bucket: "minawan-pics.fireb
         };
 
         const getPublicUrl = (file: any) => {
-            // Standard public URL for Firebase Storage (GCS)
-            return `https://storage.googleapis.com/${event.bucket}/${encodeURIComponent(file.name)}`;
+            const metadata = file.metadata;
+            const token = metadata?.metadata?.firebaseStorageDownloadTokens;
+            // Standard public URL for Firebase Storage (GCS) with token
+            return `https://firebasestorage.googleapis.com/v0/b/${event.bucket}/o/${encodeURIComponent(file.name)}?alt=media&token=${token}`;
         };
 
         // 3. Generate a json list of {twitchUsername, minasona, minasona_(format)_256, minasona_(format)_512, minasona_(format)_64}
@@ -58,6 +61,20 @@ export const updateJsonCatalog = onObjectFinalized({ bucket: "minawan-pics.fireb
         // minasona.png, minasona_256x256.avif, minasona_256x256.png, minasona_512x512.avif, minasona_512x512.png, minasona_64x64.avif, minasona_64x64.png
 
         for (const file of userFiles) {
+            // Check if file has a download token, if not, create one
+            let metadata = file.metadata;
+            if (!metadata?.metadata?.firebaseStorageDownloadTokens) {
+                const token = crypto.randomUUID();
+                await file.setMetadata({
+                    metadata: {
+                        firebaseStorageDownloadTokens: token
+                    }
+                });
+                // Refresh metadata after update
+                const [newMetadata] = await file.getMetadata();
+                file.metadata = newMetadata;
+            }
+
             const name = file.name.split('/').pop();
             const publicUrl = getPublicUrl(file);
 
