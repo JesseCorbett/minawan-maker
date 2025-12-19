@@ -9,81 +9,51 @@ initializeApp();
 setGlobalOptions({maxInstances: 1});
 
 export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.firebasestorage.app"}, async (event) => {
+    if (!event.data.name.endsWith('/minasona.png')) return;
+
     const storage = getStorage();
     const db = getFirestore();
     const bucket = storage.bucket(event.bucket);
 
-    // 1. Get all items in the bucket at path /minawan/{userId}/*
+    // 1. Get all minasona.png files in the bucket
     const [files] = await bucket.getFiles({prefix: 'minawan/'});
+    const minasonaFiles = files.filter(f => f.name.endsWith('/minasona.png'));
 
-    const usersData: Record<string, any> = {};
+    const catalog = [];
 
-    for (const file of files) {
+    for (const file of minasonaFiles) {
         const pathParts = file.name.split('/');
-        // Expecting minawan/{userId}/filename
+        // Expecting minawan/{userId}/minasona.png
         if (pathParts.length !== 3 || pathParts[0] !== 'minawan') continue;
 
         const userId = pathParts[1];
 
-        if (!usersData[userId]) {
-            usersData[userId] = {
-                userId,
-                files: []
-            };
-        }
-        usersData[userId].files.push(file);
-    }
-
-    const catalog = [];
-
-    for (const userId in usersData) {
         // 2. Match file names to extract userId and match to firestore documents at /minawan/{userId}
         const userDoc = await db.collection('minawan').doc(userId).get();
         const twitchUsername = userDoc.exists ? userDoc.data()?.twitchUsername : undefined;
 
-        const userFiles: File[] = usersData[userId].files;
-        const entry: any = {
-            twitchUsername
+        const getPublicUrl = (fileName: string) => {
+            return `https://storage.googleapis.com/${event.bucket}/${fileName}`;
         };
 
-        const getPublicUrl = (file: any) => {
-            const metadata = file.metadata;
-            const token = metadata?.metadata?.firebaseStorageDownloadTokens;
-            // Standard public URL for Firebase Storage (GCS) with token
-            return `https://firebasestorage.googleapis.com/v0/b/${event.bucket}/o/${encodeURIComponent(file.name)}?alt=media&token=${token}`;
-        };
+        // Ensure minasona.png is public (assuming others are too as they are created together)
+        const [isPublic] = await file.isPublic();
+        if (!isPublic) {
+            await file.makePublic();
+        }
 
         // 3. Generate a json list of {twitchUsername, minasona, minasona_(format)_256, minasona_(format)_512, minasona_(format)_64}
         // where the minasona fields are the match publicly accessible URL for the respective image
-
-        // Expected files:
-        // minasona.png, minasona_256x256.avif, minasona_256x256.png, minasona_512x512.avif, minasona_512x512.png, minasona_64x64.avif, minasona_64x64.png
-
-        for (const file of userFiles) {
-            const name = file.name.split('/').pop();
-            const publicUrl = getPublicUrl(file);
-
-            if (name === 'minasona.png') {
-                entry.minasona = publicUrl;
-                const fileRef = bucket.file(`/minawan/${true}/minasona.png`);
-                const isPublic = await fileRef.isPublic();
-                if (!isPublic) {
-                    await bucket.file(`/minawan/${userId}/minasona.png`).makePublic();
-                }
-            } else if (name === 'minasona_256x256.avif') {
-                entry.minasona_avif_256 = publicUrl;
-            } else if (name === 'minasona_256x256.png') {
-                entry.minasona_png_256 = publicUrl;
-            } else if (name === 'minasona_512x512.avif') {
-                entry.minasona_avif_512 = publicUrl;
-            } else if (name === 'minasona_512x512.png') {
-                entry.minasona_png_512 = publicUrl;
-            } else if (name === 'minasona_64x64.avif') {
-                entry.minasona_avif_64 = publicUrl;
-            } else if (name === 'minasona_64x64.png') {
-                entry.minasona_png_64 = publicUrl;
-            }
-        }
+        const entry: any = {
+            twitchUsername,
+            minasona: getPublicUrl(file.name),
+            minasonaAvif256: getPublicUrl(`minawan/${userId}/minasona_256x256.avif`),
+            minasonaPng256: getPublicUrl(`minawan/${userId}/minasona_256x256.png`),
+            minasonaAvif512: getPublicUrl(`minawan/${userId}/minasona_512x512.avif`),
+            minasonaPng512: getPublicUrl(`minawan/${userId}/minasona_512x512.png`),
+            minasonaAvif64: getPublicUrl(`minawan/${userId}/minasona_64x64.avif`),
+            minasonaPng64: getPublicUrl(`minawan/${userId}/minasona_64x64.png`)
+        };
 
         catalog.push(entry);
     }
@@ -91,7 +61,7 @@ export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.fireba
     // 4. Upload the json file to the bucket at /minawan/gallery.json
     const galleryFile = bucket.file('minawan/gallery.json')
     await galleryFile.save(JSON.stringify(catalog), {
-        contentType: 'application/json'
+        contentType: 'application/json',
+        public: true
     });
-    await galleryFile.makePublic();
 });

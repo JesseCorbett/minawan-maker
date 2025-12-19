@@ -110,6 +110,7 @@ async function checkFileInput(event: InputEvent) {
   border: 4px solid var(--cerb-dark);
   border-radius: 12px;
   cursor: pointer;
+  user-select: none;
 }
 
 #links > *:hover {

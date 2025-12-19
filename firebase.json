@@ -19,7 +19,7 @@
     "redirects": [
       {
         "source": "/gallery.json",
-        "destination": "https://firebasestorage.googleapis.com/v0/b/minawan-pics.firebasestorage.app/o/minawan%2Fgallery.json",
+        "destination": "https://storage.googleapis.com/minawan-pics.firebasestorage.app/minawan%2Fgallery.json",
         "type": 301
       }
     ]
