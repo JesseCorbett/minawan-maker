@@ -16,6 +16,7 @@ export default defineNuxtConfig({
     head: {
       title: 'Make a Minawan!!',
       script: [{ src: '/jscolor.min.js' }],
+      link: [{ rel: 'icon', type: 'image/png', href: '/orby.png' }],
       meta: [
         { property: 'og:title', content: 'Minawan.me' },
         { property: 'og:image', content: '/minawan.png' },
