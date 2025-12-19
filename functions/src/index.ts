@@ -3,7 +3,6 @@ import { onObjectFinalized } from 'firebase-functions/storage';
 import { initializeApp } from "firebase-admin/app";
 import { getStorage } from "firebase-admin/storage";
 import { getFirestore } from "firebase-admin/firestore";
-import * as crypto from "crypto";
 
 initializeApp();
 
@@ -42,7 +41,7 @@ export const updateJsonCatalog = onObjectFinalized({ bucket: "minawan-pics.fireb
         const userDoc = await db.collection('minawan').doc(userId).get();
         const twitchUsername = userDoc.exists ? userDoc.data()?.twitchUsername : undefined;
 
-        const userFiles = usersData[userId].files;
+        const userFiles: File[] = usersData[userId].files;
         const entry: any = {
             twitchUsername
         };
@@ -61,25 +60,16 @@ export const updateJsonCatalog = onObjectFinalized({ bucket: "minawan-pics.fireb
         // minasona.png, minasona_256x256.avif, minasona_256x256.png, minasona_512x512.avif, minasona_512x512.png, minasona_64x64.avif, minasona_64x64.png
 
         for (const file of userFiles) {
-            // Check if file has a download token, if not, create one
-            let metadata = file.metadata;
-            if (!metadata?.metadata?.firebaseStorageDownloadTokens) {
-                const token = crypto.randomUUID();
-                await file.setMetadata({
-                    metadata: {
-                        firebaseStorageDownloadTokens: token
-                    }
-                });
-                // Refresh metadata after update
-                const [newMetadata] = await file.getMetadata();
-                file.metadata = newMetadata;
-            }
-
             const name = file.name.split('/').pop();
             const publicUrl = getPublicUrl(file);
 
             if (name === 'minasona.png') {
                 entry.minasona = publicUrl;
+                const fileRef = bucket.file(`/minawan/${true}/minasona.png`);
+                const isPublic = await fileRef.isPublic();
+                if (!isPublic) {
+                    await bucket.file(`/minawan/${userId}/minasona.png`).makePublic();
+                }
             } else if (name === 'minasona_256x256.avif') {
                 entry.minasona_avif_256 = publicUrl;
             } else if (name === 'minasona_256x256.png') {
@@ -99,27 +89,8 @@ export const updateJsonCatalog = onObjectFinalized({ bucket: "minawan-pics.fireb
     }
 
     // 4. Upload the json file to the bucket at /minawan/gallery.json
-    const galleryFile = bucket.file('minawan/gallery.json');
-    
-    // Check for existing token to maintain it
-    let galleryToken;
-    try {
-        const [galleryMetadata] = await galleryFile.getMetadata();
-        galleryToken = galleryMetadata?.metadata?.firebaseStorageDownloadTokens;
-    } catch (e) {
-        // File might not exist yet
-    }
-
-    if (!galleryToken) {
-        galleryToken = crypto.randomUUID();
-    }
-
-    await galleryFile.save(JSON.stringify(catalog), {
+    await bucket.file('minawan/gallery.json').save(JSON.stringify(catalog), {
         contentType: 'application/json',
-        metadata: {
-            metadata: {
-                firebaseStorageDownloadTokens: galleryToken
-            }
-        }
+        public: true
     });
 });

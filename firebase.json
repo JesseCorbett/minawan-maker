@@ -19,8 +19,8 @@
     "redirects": [
       {
         "source": "/gallery.json",
-        "destination": "https://firebasestorage.googleapis.com/v0/b/minawan-pics.firebasestorage.app/o/minawan%2Fgallery.json?alt=media&token=c00edb38-5a53-4144-ae02-821e90b60fe6",
-        "type": 302
+        "destination": "https://firebasestorage.googleapis.com/v0/b/minawan-pics.firebasestorage.app/o/minawan%2Fgallery.json",
+        "type": 301
       }
     ]
   },
