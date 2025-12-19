@@ -100,7 +100,26 @@ export const updateJsonCatalog = onObjectFinalized({ bucket: "minawan-pics.fireb
 
     // 4. Upload the json file to the bucket at /minawan/gallery.json
     const galleryFile = bucket.file('minawan/gallery.json');
+    
+    // Check for existing token to maintain it
+    let galleryToken;
+    try {
+        const [galleryMetadata] = await galleryFile.getMetadata();
+        galleryToken = galleryMetadata?.metadata?.firebaseStorageDownloadTokens;
+    } catch (e) {
+        // File might not exist yet
+    }
+
+    if (!galleryToken) {
+        galleryToken = crypto.randomUUID();
+    }
+
     await galleryFile.save(JSON.stringify(catalog), {
         contentType: 'application/json',
+        metadata: {
+            metadata: {
+                firebaseStorageDownloadTokens: galleryToken
+            }
+        }
     });
 });
