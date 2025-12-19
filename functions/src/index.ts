@@ -40,6 +40,7 @@ export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.fireba
         const [isPublic] = await file.isPublic();
         if (!isPublic) {
             await file.makePublic();
+            await file.setMetadata({cacheControl: 'Cache-Control:public, max-age=3600, s-maxage=600'});
         }
 
         // 3. Generate a json list of {twitchUsername, minasona, minasona_(format)_256, minasona_(format)_512, minasona_(format)_64}
@@ -62,6 +63,9 @@ export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.fireba
     const galleryFile = bucket.file('minawan/gallery.json')
     await galleryFile.save(JSON.stringify(catalog), {
         contentType: 'application/json',
-        public: true
+        public: true,
+        metadata: {
+            cacheControl: 'public, max-age=0, s-maxage=0'
+        }
     });
 });
