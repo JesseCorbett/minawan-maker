@@ -88,7 +88,6 @@ onUnmounted(() => window.removeEventListener("resize", calcMinawan));
   justify-content: end;
   gap: 25px;
   opacity: 0.2;
-  overflow: clip;
 }
 
 .minawan-rows > * {
