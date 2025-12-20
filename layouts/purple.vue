@@ -1,19 +1,46 @@
 <script setup lang="ts">
 import type { Eyes } from "~/components/Minawan.vue";
+import { onMounted, onUnmounted ,ref } from "vue";
 
 const eyes: Eyes[] = ['star', '^', 'arrows', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o']
+const minawanSize: number = 100;
+let block: boolean = false;
+let rows = ref(0);
+let columns = ref(0);
+let syncKey = ref(0);
 
 function getEyes(): Eyes {
   const index = Math.round(Math.random() * 100) % eyes.length
   return eyes[index]
 }
+
+function calcMinawan(): void {
+  if (block) return;
+  block = true;
+  
+  const w: number = window.innerWidth;
+  const h: number = window.innerHeight;
+
+  rows.value = Math.floor(h / minawanSize);
+  columns.value = Math.floor(w / minawanSize);
+  syncKey.value++;
+
+  setTimeout(() => block = false, 100);
+}
+
+onMounted(() => {
+  calcMinawan();
+  addEventListener("resize", calcMinawan);
+});
+
+onUnmounted(() => window.removeEventListener("resize", calcMinawan));
 </script>
 
 <template>
-  <div id="content">
-    <div class="minawan-rows" v-for="n in 20">
+  <div id="content" :key="syncKey">
+    <div class="minawan-rows" v-for="n in rows">
       <Minawan
-          v-for="n in 100"
+          v-for="n in columns"
           :key="n"
           style="--body-light: var(--cerb-dark); --body-shaded: var(--cerb-dark)"
           :style="`--i: ${n % 2 === 0 ? '-8deg' : '8deg'}`"
@@ -61,6 +88,7 @@ function getEyes(): Eyes {
   justify-content: end;
   gap: 25px;
   opacity: 0.2;
+  overflow: clip;
 }
 
 .minawan-rows > * {
