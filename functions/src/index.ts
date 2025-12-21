@@ -9,6 +9,10 @@ initializeApp();
 
 setGlobalOptions({maxInstances: 1});
 
+function getPublicUrl(bucket: string, fileName: string) {
+    return `https://storage.googleapis.com/${bucket}/${fileName}`;
+};
+
 export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.firebasestorage.app"}, async (event) => {
     if (!event.data.name.endsWith('/minasona.png')) return;
 
@@ -33,10 +37,6 @@ export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.fireba
         const userDoc = await db.collection('minawan').doc(userId).get();
         const twitchUsername = userDoc.exists ? userDoc.data()?.twitchUsername : undefined;
 
-        const getPublicUrl = (fileName: string) => {
-            return `https://storage.googleapis.com/${event.bucket}/${fileName}`;
-        };
-
         // Ensure minasona.png is public (assuming others are too as they are created together)
         const [isPublic] = await file.isPublic();
         if (!isPublic) {
@@ -49,13 +49,13 @@ export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.fireba
         const entry: any = {
             id: userId,
             twitchUsername,
-            minasona: getPublicUrl(file.name),
-            minasonaAvif256: getPublicUrl(`minawan/${userId}/minasona_256x256.avif`),
-            minasonaPng256: getPublicUrl(`minawan/${userId}/minasona_256x256.png`),
-            minasonaAvif512: getPublicUrl(`minawan/${userId}/minasona_512x512.avif`),
-            minasonaPng512: getPublicUrl(`minawan/${userId}/minasona_512x512.png`),
-            minasonaAvif64: getPublicUrl(`minawan/${userId}/minasona_64x64.avif`),
-            minasonaPng64: getPublicUrl(`minawan/${userId}/minasona_64x64.png`)
+            minasona: getPublicUrl(event.bucket, file.name),
+            minasonaAvif256: getPublicUrl(event.bucket, `minawan/${userId}/minasona_256x256.avif`),
+            minasonaPng256: getPublicUrl(event.bucket, `minawan/${userId}/minasona_256x256.png`),
+            minasonaAvif512: getPublicUrl(event.bucket, `minawan/${userId}/minasona_512x512.avif`),
+            minasonaPng512: getPublicUrl(event.bucket, `minawan/${userId}/minasona_512x512.png`),
+            minasonaAvif64: getPublicUrl(event.bucket, `minawan/${userId}/minasona_64x64.avif`),
+            minasonaPng64: getPublicUrl(event.bucket, `minawan/${userId}/minasona_64x64.png`)
         };
 
         catalog.push(entry);
@@ -63,7 +63,17 @@ export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.fireba
 
     for (const backfillEntry of backfill) {
         if (!catalog.some((entry) => entry.twitchUsername === backfillEntry.twitchUsername)) {
-            // catalog.push({ twitchUsername: backfillEntry.twitchUsername, minasona: backfillEntry.minasonaName });
+            catalog.push({
+                backfill: true,
+                twitchUsername: backfillEntry.twitchUsername,
+                minasona: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}.png`),
+                minasonaAvif256: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}_256x256.avif`),
+                minasonaPng256: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}_256x256.png`),
+                minasonaAvif512: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}_512x512.avif`),
+                minasonaPng512: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}_512x512.png`),
+                minasonaAvif64: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}_64x64.avif`),
+                minasonaPng64: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}_64x64.png`)
+            });
         }
     }
 
