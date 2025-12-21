@@ -2,13 +2,14 @@
 export interface MinawanInfo {
   twitchUsername?: string;
   url: string;
+  source: string;
 }
 
 defineProps<MinawanInfo>();
 </script>
 
 <template>
-  <div class="minawan-box">
+  <a :href="source" :target="twitchUsername" class="minawan-box">
     <img
         :src="url"
         :alt="twitchUsername || 'A minawan'"
@@ -19,7 +20,7 @@ defineProps<MinawanInfo>();
       <img src="~/assets/twitch.svg" alt="Twitch logo" width="20" height="20"/>
       {{ twitchUsername || 'Unnamed Minawan' }}
     </span>
-  </div>
+  </a>
 </template>
 
 <style scoped>

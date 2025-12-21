@@ -15,6 +15,7 @@ type Minasona = {
   id?: string;
   twitchUsername?: string;
   minasonaAvif256: string;
+  minasona: string;
 }
 
 const {data} = await useFetch<Minasona[]>('https://storage.googleapis.com/minawan-pics.firebasestorage.app/minawan%2Fgallery.json');
@@ -39,12 +40,14 @@ const minasonaGallery = computed(() => data.value?.filter((entry: any) => entry.
       <MinawanBox
           v-if="userMinasona"
           :twitch-username="userMinasona.twitchUsername"
-          :url="userMinasona.minasonaAvif256"/>
+          :url="userMinasona.minasonaAvif256"
+          :source="userMinasona.minasona"/>
       <MinawanBox
           v-for="entry in minasonaGallery"
           :key="entry.id || entry.minasonaAvif256"
           :twitch-username="entry.twitchUsername"
-          :url="entry.minasonaAvif256"/>
+          :url="entry.minasonaAvif256"
+          :source="entry.minasona"/>
     </div>
     <div id="credit">
       <div id="info" @mouseover="showContact = true">ⓘ</div>
