@@ -54,7 +54,7 @@ async function checkFileInput(event: InputEvent) {
       <input
           id="upload-minawan-file"
           type="file"
-          accept="image/*"
+          accept="image/png,image/jpeg,image/webp,image/avif"
           style="display: none"
           @change="checkFileInput"/>
       <NuxtLink v-if="!user" to="/login">Login</NuxtLink>

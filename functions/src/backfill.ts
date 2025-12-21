@@ -1,4 +1,4 @@
-[
+export const backfill = [
   { "twitchUsername": "gamikuwan", "minasonaName": "Gamikuwan" },
   { "twitchUsername": "rubicon373", "minasonaName": "Rubiconwan" },
   { "twitchUsername": "hybert_", "minasonaName": "hybertwan" },

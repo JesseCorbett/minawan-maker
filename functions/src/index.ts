@@ -3,18 +3,11 @@ import { onObjectFinalized } from 'firebase-functions/storage';
 import { initializeApp } from "firebase-admin/app";
 import { getStorage } from "firebase-admin/storage";
 import { getFirestore } from "firebase-admin/firestore";
-import * as backfill from './minawanTwitch.json';
+import { backfill } from './backfill';
 
 initializeApp();
 
 setGlobalOptions({maxInstances: 1});
-
-type MinawanBackfill = {
-    twitchUsername: string;
-    minasonaName: string;
-}
-
-backfill as MinawanBackfill[];
 
 export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.firebasestorage.app"}, async (event) => {
     if (!event.data.name.endsWith('/minasona.png')) return;
