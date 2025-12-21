@@ -66,7 +66,7 @@ export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.fireba
             catalog.push({
                 backfill: true,
                 twitchUsername: backfillEntry.twitchUsername,
-                minasona: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}.png`),
+                minasona: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}.webp`),
                 minasonaAvif256: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}_256x256.avif`),
                 minasonaPng256: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}_256x256.png`),
                 minasonaAvif512: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}_512x512.avif`),
