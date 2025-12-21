@@ -20,9 +20,9 @@ type Minasona = {
 
 const {data} = await useFetch<Minasona[]>('https://storage.googleapis.com/minawan-pics.firebasestorage.app/minawan%2Fgallery.json');
 
-const userMinasona = computed(() => data.value?.find((entry: any) => entry.id === user.value?.uid));
+const userMinasona = computed(() => data.value?.find((entry: any) => entry.id === user.value?.uid ));
 
-const minasonaGallery = computed(() => data.value?.filter((entry: any) => entry.id !== user.value?.uid));
+const minasonaGallery = computed(() => data.value?.filter((entry: any) => entry.id !== user.value?.uid || entry.backfill));
 </script>
 
 <template>
