@@ -50,7 +50,7 @@ async function checkFileInput(event: InputEvent) {
     <h1>Make a Minawan!!</h1>
     <div id="links">
       <NuxtLink id="to-gallery" to="/gallery">View Minawan Gallery</NuxtLink>
-      <label v-if="!!user" for="upload-minawan-file">{{ uploadProgress ? `Uploaded ${Math.ceil(uploadProgress * 100)}%` : 'Upload Minasona' }}</label>
+      <label v-if="!!user" for="upload-minawan-file">{{ uploadProgress ? uploadProgress === 1 ? 'Upload Complete' : `Uploaded ${Math.ceil(uploadProgress * 100)}%` : 'Upload Minasona' }}</label>
       <input
           id="upload-minawan-file"
           type="file"
