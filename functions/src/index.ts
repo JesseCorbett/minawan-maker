@@ -84,7 +84,6 @@ export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.fireba
         public: true,
         metadata: {
             cacheControl: 'public, max-age=0, s-maxage=0',
-
         }
     });
 });
