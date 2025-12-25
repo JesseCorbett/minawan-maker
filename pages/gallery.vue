@@ -2,6 +2,7 @@
 import { definePageMeta } from "#imports";
 import MinawanBox from "~/components/MinawanBox.vue";
 import { useCurrentUser } from "vuefire";
+import Fuse from "fuse.js";
 
 const showContact = ref(false);
 
@@ -21,8 +22,20 @@ type Minasona = {
 const {data} = await useFetch<Minasona[]>('https://storage.googleapis.com/minawan-pics.firebasestorage.app/minawan%2Fgallery.json');
 
 const userMinasona = computed(() => data.value?.find((entry: any) => entry.id === user.value?.uid ));
-
 const minasonaGallery = computed(() => data.value?.filter((entry: any) => entry.id !== user.value?.uid || entry.backfill));
+
+const query = ref('');
+
+const fuse = computed(() => {
+  return new Fuse(minasonaGallery.value || [], {
+    keys: ['twitchUsername']
+  })
+});
+
+const galleryOutput = computed(() => {
+  if (!query.value) return minasonaGallery.value;
+  return fuse.value.search(query.value).map(result => result.item);
+})
 </script>
 
 <template>
@@ -36,6 +49,9 @@ const minasonaGallery = computed(() => data.value?.filter((entry: any) => entry.
       <NuxtLink to="/">Make or Upload your own Minawan</NuxtLink>
       <a id="api" href="https://minawan.me/gallery.json" target="gallery-api">Minawan API</a>
     </div>
+    <div id="search">
+      <input v-model="query" autocomplete="off" placeholder="Search Minawan"/>
+    </div>
     <div id="gallery">
       <MinawanBox
           v-if="userMinasona"
@@ -43,7 +59,7 @@ const minasonaGallery = computed(() => data.value?.filter((entry: any) => entry.
           :url="userMinasona.minasonaAvif256"
           :source="userMinasona.minasona"/>
       <MinawanBox
-          v-for="entry in minasonaGallery"
+          v-for="entry in galleryOutput"
           :key="entry.id || entry.minasonaAvif256"
           :twitch-username="entry.twitchUsername"
           :url="entry.minasonaAvif256"
@@ -89,7 +105,7 @@ const minasonaGallery = computed(() => data.value?.filter((entry: any) => entry.
 
 #links {
   display: flex;
-  margin: 0 auto 32px;
+  margin: 0 auto 16px;
   width: fit-content;
   gap: 16px;
 }
@@ -117,6 +133,28 @@ const minasonaGallery = computed(() => data.value?.filter((entry: any) => entry.
   #api {
     display: none;
   }
+}
+
+#search {
+  display: flex;
+  margin: 0 auto 32px;
+  width: fit-content;
+}
+
+#search > input {
+  width: 250px;
+  display: block;
+  font-family: sans-serif;
+  font-size: 16px;
+  text-decoration: none;
+  padding: 8px 12px;
+  border: 4px solid var(--pink);
+  border-radius: 16px;
+  user-select: none;
+}
+
+#search > input:focus {
+  outline: none;
 }
 
 #credit {
