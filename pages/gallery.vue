@@ -94,13 +94,11 @@ const galleryOutput = computed(() => {
 <style scoped>
 #gallery {
   --minawan-box-size: 200px;
-
-  width: 100%;
   display: grid;
   grid-template-columns: repeat(auto-fit, var(--minawan-box-size, 200px));
-  gap: 24px;
+  gap: 32px;
   align-content: start;
-  justify-content: space-evenly;
+  justify-content: center;
 }
 
 #links {
