@@ -18,12 +18,26 @@
     ],
     "redirects": [
       {
+        "source": "/api.json",
+        "destination": "https://storage.googleapis.com/minawan-pics.firebasestorage.app/api.json",
+        "type": 301
+      },
+      {
         "source": "/gallery.json",
-        "destination": "https://storage.googleapis.com/minawan-pics.firebasestorage.app/minawan%2Fgallery.json",
+        "destination": "https://storage.googleapis.com/minawan-pics.firebasestorage.app/minawan/api.json",
         "type": 301
       }
     ],
     "headers": [
+      {
+        "source": "api.json",
+        "headers": [
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "*"
+          }
+        ]
+      },
       {
         "source": "gallery.json",
         "headers": [

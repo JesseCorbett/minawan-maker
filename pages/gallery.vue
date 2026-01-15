@@ -15,11 +15,11 @@ const user = useCurrentUser();
 type Minasona = {
   id?: string;
   twitchUsername?: string;
-  minasonaAvif256: string;
-  minasona: string;
+  avif256: string;
+  original: string;
 }
 
-const {data} = await useFetch<Minasona[]>('https://storage.googleapis.com/minawan-pics.firebasestorage.app/minawan%2Fgallery.json');
+const {data} = await useFetch<Minasona[]>('https://storage.googleapis.com/minawan-pics.firebasestorage.app/minawan/api.json');
 
 const userMinasona = computed(() => data.value?.find((entry: any) => entry.id === user.value?.uid ));
 const minasonaGallery = computed(() => data.value?.filter((entry: any) => entry.id !== user.value?.uid || entry.backfill));
@@ -47,7 +47,7 @@ const galleryOutput = computed(() => {
     <h1>Minawan Gallery</h1>
     <div id="links">
       <NuxtLink to="/">Make or Upload your own Minawan</NuxtLink>
-      <a id="api" href="https://minawan.me/gallery.json" target="gallery-api">Minawan API</a>
+      <a id="api" href="https://minawan.me/api.json" target="gallery-api">Minawan API</a>
     </div>
     <div id="search">
       <input v-model="query" autocomplete="off" placeholder="Search Minawan"/>
@@ -56,14 +56,14 @@ const galleryOutput = computed(() => {
       <MinawanBox
           v-if="userMinasona"
           :twitch-username="userMinasona.twitchUsername"
-          :url="userMinasona.minasonaAvif256"
-          :source="userMinasona.minasona"/>
+          :url="userMinasona.avif256"
+          :source="userMinasona.original"/>
       <MinawanBox
           v-for="entry in galleryOutput"
-          :key="entry.id || entry.minasonaAvif256"
+          :key="entry.id || entry.avif256"
           :twitch-username="entry.twitchUsername"
-          :url="entry.minasonaAvif256"
-          :source="entry.minasona"/>
+          :url="entry.avif256"
+          :source="entry.original"/>
     </div>
     <div id="credit">
       <div id="info" @mouseover="showContact = true">ⓘ</div>

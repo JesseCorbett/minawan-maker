@@ -36,7 +36,7 @@ describe('updateJsonCatalog', () => {
     jest.clearAllMocks();
   });
 
-  it('should exit early if fileName is not original.png', async () => {
+  it('should exit early if fileName is not minasona.png', async () => {
     const event = {
       specversion: '1.0',
       id: 'event-id',
@@ -62,7 +62,7 @@ describe('updateJsonCatalog', () => {
       type: 'google.firebase.storage.object.v1.finalized',
       time: new Date().toISOString(),
       data: {
-        name: 'invalid/user1/original.png',
+        name: 'invalid/user1/minasona.png',
       },
       bucket: 'test-bucket',
     };
@@ -82,13 +82,13 @@ describe('updateJsonCatalog', () => {
       type: 'google.firebase.storage.object.v1.finalized',
       time: new Date().toISOString(),
       data: {
-        name: `${community}/${userId}/original.png`,
+        name: `${community}/${userId}/minasona.png`,
       },
       bucket: 'test-bucket',
     };
 
     const mockFile = {
-      name: `${community}/${userId}/original.png`,
+      name: `${community}/${userId}/minasona.png`,
       isPublic: jest.fn().mockResolvedValue([true]),
       makePublic: jest.fn(),
       setMetadata: jest.fn(),
@@ -125,11 +125,11 @@ describe('updateJsonCatalog', () => {
     expect(mockCollection.doc).toHaveBeenCalledWith(userId);
 
     // Verify it saved community gallery
-    expect(mockBucket.file).toHaveBeenCalledWith(`${community}/gallery.json`);
+    expect(mockBucket.file).toHaveBeenCalledWith(`${community}/api.json`);
     expect(mockGalleryFile.save).toHaveBeenCalled();
 
     // Verify it processed combined gallery (loops through minawan, goomer, minyan, wormpal)
-    expect(mockBucket.file).toHaveBeenCalledWith('gallery.json');
+    expect(mockBucket.file).toHaveBeenCalledWith('api.json');
     
     // Check if it saved the combined gallery
     const lastCall = mockGalleryFile.save.mock.calls[mockGalleryFile.save.mock.calls.length - 1];
@@ -148,13 +148,13 @@ describe('updateJsonCatalog', () => {
       type: 'google.firebase.storage.object.v1.finalized',
       time: new Date().toISOString(),
       data: {
-        name: `${community}/${userId}/original.png`,
+        name: `${community}/${userId}/minasona.png`,
       },
       bucket: 'test-bucket',
     };
 
     const mockFile = {
-      name: `${community}/${userId}/original.png`,
+      name: `${community}/${userId}/minasona.png`,
       isPublic: jest.fn().mockResolvedValue([false]),
       makePublic: jest.fn(),
       setMetadata: jest.fn(),
@@ -199,13 +199,13 @@ describe('updateJsonCatalog', () => {
       type: 'google.firebase.storage.object.v1.finalized',
       time: new Date().toISOString(),
       data: {
-        name: `${community}/${userId}/original.png`,
+        name: `${community}/${userId}/minasona.png`,
       },
       bucket: 'test-bucket',
     };
 
     mockBucket.getFiles.mockResolvedValue([[{
-      name: `${community}/${userId}/original.png`,
+      name: `${community}/${userId}/minasona.png`,
       isPublic: jest.fn().mockResolvedValue([true]),
     }]]);
 
