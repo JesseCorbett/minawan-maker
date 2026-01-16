@@ -24,7 +24,7 @@
       },
       {
         "source": "/gallery.json",
-        "destination": "https://storage.googleapis.com/minawan-pics.firebasestorage.app/minawan/api.json",
+        "destination": "https://storage.googleapis.com/minawan-pics.firebasestorage.app/minawan/gallery.json",
         "type": 301
       }
     ],
