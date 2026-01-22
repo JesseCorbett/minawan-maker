@@ -213,9 +213,10 @@ describe('moderationDeleteImage', () => {
 
   it('should delete files and return 200', async () => {
     const req = {
-      body: {
+      query: {
         community: 'minawan',
         userId: 'user1',
+        key: 'MODERATION_KEY', // Default name from defineString mock
       },
     };
     const res = {
@@ -231,7 +232,11 @@ describe('moderationDeleteImage', () => {
   });
 
   it('should return 400 for missing parameters', async () => {
-    const req = { body: {} };
+    const req = {
+      query: {
+        key: 'MODERATION_KEY',
+      }
+    };
     const res = {
       status: jest.fn().mockReturnThis(),
       send: jest.fn(),
@@ -245,9 +250,10 @@ describe('moderationDeleteImage', () => {
 
   it('should return 400 for invalid community', async () => {
     const req = {
-      body: {
+      query: {
         community: 'invalid',
         userId: 'user1',
+        key: 'MODERATION_KEY',
       },
     };
     const res = {
