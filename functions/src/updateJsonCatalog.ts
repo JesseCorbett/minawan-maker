@@ -3,6 +3,7 @@ import { getStorage } from "firebase-admin/storage";
 import { getFirestore } from "firebase-admin/firestore";
 import { backfill } from './backfill';
 import { Community, communityChannels } from './communities';
+import { onRequest } from "firebase-functions/https";
 
 function getPublicUrl(bucket: string, fileName: string) {
   return `https://storage.googleapis.com/${bucket}/${fileName}`;
@@ -125,3 +126,20 @@ export async function rebuildGallery(bucketName: string, community: Community) {
     }
   });
 }
+
+export const rebuildCatalog = onRequest(async (req, res) => {
+  const { community } = req.query;
+
+  if (!Object.values(Community).includes(community as Community)) {
+    res.status(400).send("Invalid community");
+    return;
+  }
+
+  try {
+    await rebuildGallery("minawan-pics.firebasestorage.app", community as Community);
+    res.status(200).send({ message: `Rebuilt catalog for ${community}` });
+  } catch (error) {
+    console.error("Error rebuilding catalog:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
