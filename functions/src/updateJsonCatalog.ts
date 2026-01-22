@@ -2,24 +2,11 @@ import { onObjectFinalized } from 'firebase-functions/storage';
 import { getStorage } from "firebase-admin/storage";
 import { getFirestore } from "firebase-admin/firestore";
 import { backfill } from './backfill';
+import { Community, communityChannels } from './communities';
 
 function getPublicUrl(bucket: string, fileName: string) {
   return `https://storage.googleapis.com/${bucket}/${fileName}`;
 }
-
-export enum Community {
-  MINAWAN = 'minawan',
-  GOOMER = 'goomer',
-  MINYAN = 'minyan',
-  WORMPAL = 'wormpal'
-}
-
-const communityChannels: { [key in Community]: string } = {
-  minawan: 'cerbervt',
-  goomer: 'gomi',
-  minyan: 'minikomew',
-  wormpal: 'chrchie'
-};
 
 export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.firebasestorage.app"}, async (event) => {
   const pathParts = event.data.name.split('/');
@@ -31,9 +18,13 @@ export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.fireba
   if (fileName !== 'minasona.png') return;
   if (!Object.values(Community).includes(community)) return;
 
+  await rebuildGallery(event.bucket, community);
+});
+
+export async function rebuildGallery(bucketName: string, community: Community) {
   const storage = getStorage();
   const db = getFirestore();
-  const bucket = storage.bucket(event.bucket);
+  const bucket = storage.bucket(bucketName);
 
   // 1. Get all minasona.png files in the bucket
   // Note all communities use minasona.png, this is a legacy design factor.
@@ -66,13 +57,13 @@ export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.fireba
     const entry: any = {
       id: userId,
       twitchUsername,
-      original: getPublicUrl(event.bucket, file.name),
-      avif256: getPublicUrl(event.bucket, `${community}/${userId}/minasona_256x256.avif`),
-      png256: getPublicUrl(event.bucket, `${community}/${userId}/minasona_256x256.png`),
-      avif512: getPublicUrl(event.bucket, `${community}/${userId}/minasona_512x512.avif`),
-      png512: getPublicUrl(event.bucket, `${community}/${userId}/minasona_512x512.png`),
-      avif64: getPublicUrl(event.bucket, `${community}/${userId}/minasona_64x64.avif`),
-      png64: getPublicUrl(event.bucket, `${community}/${userId}/minasona_64x64.png`)
+      original: getPublicUrl(bucketName, file.name),
+      avif256: getPublicUrl(bucketName, `${community}/${userId}/minasona_256x256.avif`),
+      png256: getPublicUrl(bucketName, `${community}/${userId}/minasona_256x256.png`),
+      avif512: getPublicUrl(bucketName, `${community}/${userId}/minasona_512x512.avif`),
+      png512: getPublicUrl(bucketName, `${community}/${userId}/minasona_512x512.png`),
+      avif64: getPublicUrl(bucketName, `${community}/${userId}/minasona_64x64.avif`),
+      png64: getPublicUrl(bucketName, `${community}/${userId}/minasona_64x64.png`)
     };
 
     catalog.push(entry);
@@ -84,13 +75,13 @@ export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.fireba
         catalog.push({
           backfill: true,
           twitchUsername: backfillEntry.twitchUsername,
-          original: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}.webp`),
-          avif256: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}_256x256.avif`),
-          png256: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}_256x256.png`),
-          avif512: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}_512x512.avif`),
-          png512: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}_512x512.png`),
-          avif64: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}_64x64.avif`),
-          png64: getPublicUrl(event.bucket, `minawan-backfill/${backfillEntry.minasonaName}_64x64.png`)
+          original: getPublicUrl(bucketName, `minawan-backfill/${backfillEntry.minasonaName}.webp`),
+          avif256: getPublicUrl(bucketName, `minawan-backfill/${backfillEntry.minasonaName}_256x256.avif`),
+          png256: getPublicUrl(bucketName, `minawan-backfill/${backfillEntry.minasonaName}_256x256.png`),
+          avif512: getPublicUrl(bucketName, `minawan-backfill/${backfillEntry.minasonaName}_512x512.avif`),
+          png512: getPublicUrl(bucketName, `minawan-backfill/${backfillEntry.minasonaName}_512x512.png`),
+          avif64: getPublicUrl(bucketName, `minawan-backfill/${backfillEntry.minasonaName}_64x64.avif`),
+          png64: getPublicUrl(bucketName, `minawan-backfill/${backfillEntry.minasonaName}_64x64.png`)
         });
       }
     }
@@ -133,4 +124,4 @@ export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.fireba
       cacheControl: 'public, max-age=0, s-maxage=0',
     }
   });
-});
+}

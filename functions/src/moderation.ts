@@ -1,9 +1,10 @@
 import { onObjectFinalized } from 'firebase-functions/storage';
 import { onRequest } from 'firebase-functions/v2/https';
 import { defineString, type StringParam } from "firebase-functions/params";
-import { Community } from "./updateJsonCatalog";
+import { Community } from "./communities";
 import { getFirestore } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
+import { rebuildGallery } from "./updateJsonCatalog";
 
 function getPublicUrl(bucket: string, fileName: string) {
   return `https://storage.googleapis.com/${bucket}/${fileName}`;
@@ -30,14 +31,14 @@ async function sendReviewWebhook(url: string, bucket: string, community: Communi
       "embeds": [
         {
           "title": "Delete this image",
-          "url": `https://us-central1-minawan-pics.cloudfunctions.net/moderationDeleteImage?key=${moderationKey.value()}&community=${community}&userId=${userId}`,
+          "url": `https://moderationdeleteimage-yicsegqncq-uc.a.run.app?key=${moderationKey.value()}&community=${community}&userId=${userId}`,
           "color": null,
           "footer": {
             "text": user
           },
           "timestamp": null,
           "image": {
-            "url": getPublicUrl(bucket, filename)
+            "url": getPublicUrl(bucket, filename) + '?t=' + Date.now()
           }
         }
       ],
@@ -72,7 +73,7 @@ export const submitModerationWebhook = onObjectFinalized({bucket: "minawan-pics.
 
 
 export const moderationDeleteImage = onRequest(async (req, res) => {
-  const { community, userId, key } = req.params;
+  const { community, userId, key } = req.query;
 
   if (key !== moderationKey.value()) {
     res.status(401).send("Invalid moderation key");
@@ -92,6 +93,7 @@ export const moderationDeleteImage = onRequest(async (req, res) => {
   const bucket = getStorage().bucket("minawan-pics.firebasestorage.app");
   try {
     await bucket.deleteFiles({ prefix: `${community}/${userId}/` });
+    await rebuildGallery("minawan-pics.firebasestorage.app", community as Community);
     res.status(200).send({ message: `Deleted files for ${userId} in ${community}` });
   } catch (error) {
     console.error("Error deleting files:", error);
