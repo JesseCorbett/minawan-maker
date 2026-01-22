@@ -1,11 +1,15 @@
 import { onObjectFinalized } from 'firebase-functions/storage';
+import { onRequest } from 'firebase-functions/v2/https';
 import { defineString, type StringParam } from "firebase-functions/params";
 import { Community } from "./updateJsonCatalog";
+import { getFirestore } from "firebase-admin/firestore";
+import { getStorage } from "firebase-admin/storage";
 
 function getPublicUrl(bucket: string, fileName: string) {
   return `https://storage.googleapis.com/${bucket}/${fileName}`;
 }
 
+const moderationKey = defineString('MODERATION_KEY');
 const hoopyWebhook = defineString('HOOPY_WEBHOOK');
 
 const communityWebhooks: { [key in Community]: StringParam } = {
@@ -15,7 +19,7 @@ const communityWebhooks: { [key in Community]: StringParam } = {
   wormpal: defineString('WORMPAL_WEBHOOK')
 };
 
-async function sendWebhook(url: string, bucket: string, filename: string, user: string) {
+async function sendReviewWebhook(url: string, bucket: string, community: Community, filename: string, user: string, userId: string) {
   await fetch(`${url}?wait=true`, {
     method: 'POST',
     headers: {
@@ -26,12 +30,12 @@ async function sendWebhook(url: string, bucket: string, filename: string, user: 
       "embeds": [
         {
           "title": "Delete this image",
-          "url": "https://minawan.me/gallery/",
+          "url": `https://us-central1-minawan-pics.cloudfunctions.net/moderationDeleteImage?key=${moderationKey.value()}&community=${community}&userId=${userId}`,
           "color": null,
           "footer": {
             "text": user
           },
-          "timestamp": new Date().toISOString(),
+          "timestamp": null,
           "image": {
             "url": getPublicUrl(bucket, filename)
           }
@@ -49,14 +53,48 @@ export const submitModerationWebhook = onObjectFinalized({bucket: "minawan-pics.
 
   const community = pathParts[0] as Community;
   const fileName = pathParts[2];
+  const userId = pathParts[1];
 
   if (fileName !== 'minasona_512x512.png') return;
   if (!Object.values(Community).includes(community)) return;
 
+  const db = getFirestore();
+  const userDoc = await db.collection('minawan').doc(userId).get();
+  const twitchUsername: string = userDoc.exists ? userDoc.data()?.twitchUsername : `Unknown user (${userId})`;
+
   const communityWebhook = communityWebhooks[community].value();
 
   if (communityWebhook && communityWebhook !== hoopyWebhook.value()) {
-    await sendWebhook(communityWebhook, event.bucket, event.data.name, 'hoopykt');
+    await sendReviewWebhook(communityWebhook, event.bucket, community, event.data.name, twitchUsername, userId);
   }
-  await sendWebhook(hoopyWebhook.value(), event.bucket, event.data.name, 'hoopykt');
+  await sendReviewWebhook(hoopyWebhook.value(), event.bucket, community, event.data.name, twitchUsername, userId);
+});
+
+
+export const moderationDeleteImage = onRequest(async (req, res) => {
+  const { community, userId, key } = req.params;
+
+  if (key !== moderationKey.value()) {
+    res.status(401).send("Invalid moderation key");
+    return;
+  }
+
+  if (!community || !userId) {
+    res.status(400).send("Missing community or userId");
+    return;
+  }
+
+  if (!Object.values(Community).includes(community as Community)) {
+    res.status(400).send("Invalid community");
+    return;
+  }
+
+  const bucket = getStorage().bucket("minawan-pics.firebasestorage.app");
+  try {
+    await bucket.deleteFiles({ prefix: `${community}/${userId}/` });
+    res.status(200).send({ message: `Deleted files for ${userId} in ${community}` });
+  } catch (error) {
+    console.error("Error deleting files:", error);
+    res.status(500).send("Internal Server Error");
+  }
 });
