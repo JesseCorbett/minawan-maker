@@ -56,7 +56,7 @@ export const submitModerationWebhook = onObjectFinalized({bucket: "minawan-pics.
   const fileName = pathParts[2];
   const userId = pathParts[1];
 
-  if (fileName !== 'minasona_512x512.png') return;
+  if (fileName !== 'minasona_256x256.png') return;
   if (!Object.values(Community).includes(community)) return;
 
   const db = getFirestore();
