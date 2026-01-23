@@ -63,12 +63,12 @@ export const submitModerationWebhook = onObjectFinalized({bucket: "minawan-pics.
   const userDoc = await db.collection('minawan').doc(userId).get();
   const twitchUsername: string = userDoc.exists ? userDoc.data()?.twitchUsername : `Unknown user (${userId})`;
 
-  const communityWebhook = communityWebhooks[community].value();
+  await sendReviewWebhook(hoopyWebhook.value(), event.bucket, community, event.data.name, twitchUsername, userId);
 
+  const communityWebhook = communityWebhooks[community].value();
   if (communityWebhook && communityWebhook !== hoopyWebhook.value()) {
     await sendReviewWebhook(communityWebhook, event.bucket, community, event.data.name, twitchUsername, userId);
   }
-  await sendReviewWebhook(hoopyWebhook.value(), event.bucket, community, event.data.name, twitchUsername, userId);
 });
 
 
