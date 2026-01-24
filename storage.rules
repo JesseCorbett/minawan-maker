@@ -10,6 +10,7 @@ service firebase.storage {
 
       match /{userId}/minasona.png {
         allow write: if request.auth != null && request.auth.uid == userId;
+        allow read: if true;
       }
     }
   }
