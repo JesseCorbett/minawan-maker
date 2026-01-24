@@ -30,7 +30,7 @@ async function sendReviewWebhook(url: string, bucket: string, community: Communi
       "content": null,
       "embeds": [
         {
-          "title": "Delete this image",
+          "title": "Delete this " + community,
           "url": `https://moderationdeleteimage-yicsegqncq-uc.a.run.app?key=${moderationKey.value()}&community=${community}&userId=${userId}`,
           "color": null,
           "footer": {
