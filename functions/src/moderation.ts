@@ -287,7 +287,11 @@ export const moderationApproveImage = onRequest(async (req, res) => {
     const previousWebhook = data.webhook;
     const previousWebhookId = data.messageId;
     if (previousWebhook && previousWebhookId) {
-      await updateWebhookMessageToApproved(previousWebhook, previousWebhookId, community as Community, data.image, twitchUsername, userId as string, key as string)
+      try {
+        await updateWebhookMessageToApproved(previousWebhook, previousWebhookId, community as Community, data.image, twitchUsername, userId as string, key as string)
+      } catch (e) {
+        console.error('Failed to update webhook message', e)
+      }
     }
   }
 
