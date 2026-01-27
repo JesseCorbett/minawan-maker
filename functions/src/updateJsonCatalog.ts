@@ -14,10 +14,16 @@ export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.fireba
   if (pathParts.length !== 3) return;
 
   const community = pathParts[0] as Community;
+  const userId = pathParts[1];
   const fileName = pathParts[2];
 
   if (fileName !== 'minasona.png') return;
   if (!Object.values(Community).includes(community)) return;
+
+  const db = getFirestore();
+  const update: { [key: string]: boolean } = {};
+  update[community] = false;
+  await db.collection('minawan').doc(userId).update(update);
 
   await rebuildGallery(event.bucket, community);
 });
@@ -45,6 +51,7 @@ export async function rebuildGallery(bucketName: string, community: Community) {
     // Note: all communities use the minawan collection, this is a legacy design factor.
     const userDoc = await db.collection('minawan').doc(userId).get();
     const twitchUsername = userDoc.exists ? userDoc.data()?.twitchUsername : undefined;
+    const approved: boolean = userDoc.exists ? userDoc.data()?.[community] : false;
 
     // Ensure minasona.png is public (assuming others are too as they are created together)
     const [isPublic] = await file.isPublic();
@@ -58,6 +65,7 @@ export async function rebuildGallery(bucketName: string, community: Community) {
     const entry: any = {
       id: userId,
       twitchUsername,
+      approved,
       original: getPublicUrl(bucketName, file.name),
       avif256: getPublicUrl(bucketName, `${community}/${userId}/minasona_256x256.avif`),
       png256: getPublicUrl(bucketName, `${community}/${userId}/minasona_256x256.png`),
@@ -75,6 +83,7 @@ export async function rebuildGallery(bucketName: string, community: Community) {
       if (!catalog.some((entry) => entry.twitchUsername === backfillEntry.twitchUsername)) {
         catalog.push({
           backfill: true,
+          approved: true,
           twitchUsername: backfillEntry.twitchUsername,
           original: getPublicUrl(bucketName, `minawan-backfill/${backfillEntry.minasonaName}.webp`),
           avif256: getPublicUrl(bucketName, `minawan-backfill/${backfillEntry.minasonaName}_256x256.avif`),
