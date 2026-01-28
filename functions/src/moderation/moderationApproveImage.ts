@@ -3,6 +3,7 @@ import { Community } from "../communities";
 import { getFirestore } from "firebase-admin/firestore";
 import { rebuildGallery } from "../updateJsonCatalog";
 import { updateWebhookMessageToApproved } from "./webhookUtils";
+import { firestore } from "firebase-admin";
 
 export const moderationApproveImage = onRequest(async (req, res) => {
   const { community, userId, key } = req.query;
@@ -26,12 +27,13 @@ export const moderationApproveImage = onRequest(async (req, res) => {
     return;
   }
 
-  const userDoc = db.collection('minawan').doc(userId as string);
-  const user = await userDoc.get();
+  const user = await db.collection('minawan').doc(userId as string).get();
   const twitchUsername: string = user.exists ? user.data()?.twitchUsername : `Unknown user (${userId})`;
-  const update: {  [key: string]: boolean } = {};
-  update[community as string] = true
-  await userDoc.update(update);
+
+  const approvalsDoc = db.collection('approvals').doc(community as Community);
+  await approvalsDoc.set({
+    approvedUsers: firestore.FieldValue.arrayUnion(userId)
+  });
 
   await rebuildGallery("minawan-pics.firebasestorage.app", community as Community);
 

@@ -33,6 +33,9 @@ export async function rebuildGallery(bucketName: string, community: Community) {
   const db = getFirestore();
   const bucket = storage.bucket(bucketName);
 
+  const approvalsDoc = await db.collection('approvals').doc(community).get();
+  const approvals: string[] = approvalsDoc.exists ? (approvalsDoc.data()?.approvedUsers || []) : [];
+
   // 1. Get all minasona.png files in the bucket
   // Note all communities use minasona.png, this is a legacy design factor.
   const [files] = await bucket.getFiles({prefix: `${community}/`});
@@ -51,13 +54,12 @@ export async function rebuildGallery(bucketName: string, community: Community) {
     // Note: all communities use the minawan collection, this is a legacy design factor.
     const userDoc = await db.collection('minawan').doc(userId).get();
     const twitchUsername = userDoc.exists ? userDoc.data()?.twitchUsername : undefined;
-    const approved: boolean = userDoc.exists ? userDoc.data()?.[community] : false;
 
     // Ensure minasona.png is public (assuming others are too as they are created together)
     const [isPublic] = await file.isPublic();
     if (!isPublic) {
       await file.makePublic();
-      await file.setMetadata({cacheControl: 'Cache-Control:public, max-age=3600, s-maxage=600'});
+      await file.setMetadata({cacheControl: 'Cache-Control:public, max-age=600, s-maxage=600'});
     }
 
     // 3. Generate a JSON list of the community sona
@@ -65,7 +67,7 @@ export async function rebuildGallery(bucketName: string, community: Community) {
     const entry: any = {
       id: userId,
       twitchUsername,
-      approved,
+      approved: approvals.includes(userId) || false,
       original: getPublicUrl(bucketName, file.name),
       avif256: getPublicUrl(bucketName, `${community}/${userId}/minasona_256x256.avif`),
       png256: getPublicUrl(bucketName, `${community}/${userId}/minasona_256x256.png`),

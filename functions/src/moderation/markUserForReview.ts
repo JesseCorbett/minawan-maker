@@ -3,6 +3,7 @@ import { defineString, type StringParam } from "firebase-functions/params";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
 import { Community } from "../communities";
 import { sendReviewWebhook, deleteWebhookMessage } from "./webhookUtils";
+import { firestore } from "firebase-admin";
 
 const hoopyWebhook = defineString('HOOPY_WEBHOOK');
 
@@ -33,6 +34,11 @@ export const markUserForReview = onObjectFinalized({bucket: "minawan-pics.fireba
   const db = getFirestore();
   const userDoc = await db.collection('minawan').doc(userId).get();
   const twitchUsername: string = userDoc.exists ? userDoc.data()?.twitchUsername : `Unknown user (${userId})`;
+
+  const approvalsDoc = db.collection('approvals').doc(community);
+  await approvalsDoc.set({
+    approvedUsers: firestore.FieldValue.arrayRemove(userId)
+  });
 
   const previous = await db.collection('minawan').doc(userId).collection(`${community}-webhooks`).get();
   for (let doc of previous.docs) {
