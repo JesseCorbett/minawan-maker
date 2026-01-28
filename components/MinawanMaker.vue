@@ -85,7 +85,7 @@ async function uploadMinasona(base64: string) {
 
 const savingMinasona = ref(false);
 async function saveMinasona() {
-  if (!dataUrl.value) return;
+  if (!dataUrl.value || savingMinasona.value) return;
   savingMinasona.value = true;
   await uploadMinasona(dataUrl.value);
   setTimeout(() => savingMinasona.value = false, 1000);
