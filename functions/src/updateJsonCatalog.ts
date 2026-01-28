@@ -97,6 +97,27 @@ export async function rebuildGallery(bucketName: string, community: Community) {
         });
       }
     }
+  } else if (community === Community.WORMPAL) {
+    const wormpalBackfill = [
+      { twitchUsername: 'gomi', minasonaName: 'wormigomi' },
+      { twitchUsername: 'unbreakabledoof', minasonaName: 'unbreakabledoof' },
+    ];
+    for (const backfillEntry of wormpalBackfill) {
+      if (!catalog.some((entry) => entry.twitchUsername === backfillEntry.twitchUsername)) {
+        catalog.push({
+          backfill: true,
+          approved: true,
+          twitchUsername: backfillEntry.twitchUsername,
+          original: getPublicUrl(bucketName, `wormpal-backfill/${backfillEntry.minasonaName}.webp`),
+          avif256: getPublicUrl(bucketName, `wormpal-backfill/${backfillEntry.minasonaName}_256x256.avif`),
+          png256: getPublicUrl(bucketName, `wormpal-backfill/${backfillEntry.minasonaName}_256x256.png`),
+          avif512: getPublicUrl(bucketName, `wormpal-backfill/${backfillEntry.minasonaName}_512x512.avif`),
+          png512: getPublicUrl(bucketName, `wormpal-backfill/${backfillEntry.minasonaName}_512x512.png`),
+          avif64: getPublicUrl(bucketName, `wormpal-backfill/${backfillEntry.minasonaName}_64x64.avif`),
+          png64: getPublicUrl(bucketName, `wormpal-backfill/${backfillEntry.minasonaName}_64x64.png`)
+        });
+      }
+    }
   }
 
   // 4. Upload the JSON file to the bucket at /{community}/api.json
