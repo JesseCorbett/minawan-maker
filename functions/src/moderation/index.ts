@@ -1,3 +1,3 @@
-export * from './submitModerationWebhook';
+export * from './markUserForReview';
 export * from './moderationDeleteImage';
 export * from './moderationApproveImage';
