@@ -35,11 +35,6 @@ export const markUserForReview = onObjectFinalized({bucket: "minawan-pics.fireba
   const userDoc = await db.collection('minawan').doc(userId).get();
   const twitchUsername: string = userDoc.exists ? userDoc.data()?.twitchUsername : `Unknown user (${userId})`;
 
-  const approvalsDoc = db.collection('approvals').doc(community);
-  await approvalsDoc.set({
-    approvedUsers: firestore.FieldValue.arrayRemove(userId)
-  });
-
   const previous = await db.collection('minawan').doc(userId).collection(`${community}-webhooks`).get();
   for (let doc of previous.docs) {
     const data = doc.data();
@@ -50,6 +45,11 @@ export const markUserForReview = onObjectFinalized({bucket: "minawan-pics.fireba
     }
     await doc.ref.delete();
   }
+
+  const approvalsDoc = db.collection('approvals').doc(community);
+  await approvalsDoc.set({
+    approvedUsers: firestore.FieldValue.arrayRemove(userId)
+  });
 
   const hoopyWebhookDoc = await createWebhookDoc(db, userId, community, hoopyWebhook.value(), event.data.name);
   const hoopyWebhookId = await sendReviewWebhook(hoopyWebhook.value(), community, event.data.name, twitchUsername, userId, hoopyWebhookDoc.id);

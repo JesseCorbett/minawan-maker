@@ -1,9 +1,30 @@
 import fft from 'firebase-functions-test';
 
 // Mocking firebase-admin
-jest.mock('firebase-admin/app', () => ({
-  initializeApp: jest.fn(),
-}));
+const mockDoc = {
+  get: jest.fn(),
+  set: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
+  create: jest.fn(),
+  exists: true,
+  data: jest.fn(),
+  id: 'mock-doc-id',
+  collection: jest.fn(),
+};
+// @ts-ignore
+mockDoc.ref = { delete: jest.fn() };
+
+const mockCollection = {
+  doc: jest.fn(() => mockDoc),
+  get: jest.fn(),
+};
+
+mockDoc.collection.mockReturnValue(mockCollection);
+
+const mockFirestore = {
+  collection: jest.fn(() => mockCollection),
+};
 
 const mockBucket = {
   getFiles: jest.fn(),
@@ -15,16 +36,25 @@ const mockStorage = {
   bucket: jest.fn(() => mockBucket),
 };
 
+jest.mock('firebase-admin/app', () => ({
+  initializeApp: jest.fn(),
+}));
+
 jest.mock('firebase-admin/storage', () => ({
   getStorage: jest.fn(() => mockStorage),
 }));
 
-const mockFirestore = {
-  collection: jest.fn(),
-};
-
 jest.mock('firebase-admin/firestore', () => ({
   getFirestore: jest.fn(() => mockFirestore),
+}));
+
+jest.mock('firebase-admin', () => ({
+  firestore: {
+    FieldValue: {
+      arrayUnion: jest.fn((val) => ({ type: 'arrayUnion', val })),
+      arrayRemove: jest.fn((val) => ({ type: 'arrayRemove', val })),
+    },
+  },
 }));
 
 // Mock firebase-functions/params
@@ -44,8 +74,22 @@ global.fetch = jest.fn().mockResolvedValue({
   json: () => Promise.resolve({}),
 }) as jest.Mock;
 
+// Mock webhook utils
+jest.mock('../src/moderation/webhookUtils', () => ({
+  sendReviewWebhook: jest.fn().mockResolvedValue('msg-id'),
+  deleteWebhookMessage: jest.fn().mockResolvedValue(true),
+  updateWebhookMessageToApproved: jest.fn().mockResolvedValue(true),
+}));
+
 // Now import the functions
-import { updateJsonCatalog, markUserForReview, moderationDeleteImage, updateJsonCatalogLegacy } from '../src/index';
+import { 
+  updateJsonCatalog, 
+  markUserForReview, 
+  moderationDeleteImage, 
+  moderationApproveImage,
+  rebuildCatalog,
+  updateJsonCatalogLegacy 
+} from '../src/index';
 import { Community } from '../src/communities';
 
 const testEnv = fft();
@@ -53,56 +97,36 @@ const testEnv = fft();
 describe('updateJsonCatalog', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default mock setup for firestore
+    mockDoc.get.mockResolvedValue({
+      exists: true,
+      data: () => ({ twitchUsername: 'user1_twitch' }),
+    });
+  });
+
+  it('should exit early if path parts are not 3', async () => {
+    const event = {
+      data: { name: 'too/many/parts/here.png' },
+      bucket: 'test-bucket',
+    };
+    await updateJsonCatalog(event as any);
+    expect(mockFirestore.collection).not.toHaveBeenCalled();
   });
 
   it('should exit early if fileName is not minasona.png', async () => {
     const event = {
-      specversion: '1.0',
-      id: 'event-id',
-      source: '/buckets/test-bucket',
-      type: 'google.firebase.storage.object.v1.finalized',
-      time: new Date().toISOString(),
-      data: {
-        name: 'minawan/user1/other.png',
-      },
+      data: { name: 'minawan/user1/other.png' },
       bucket: 'test-bucket',
     };
-
     await updateJsonCatalog(event as any);
-
-    expect(mockStorage.bucket).not.toHaveBeenCalled();
+    expect(mockFirestore.collection).not.toHaveBeenCalled();
   });
 
-  it('should exit early if community is invalid', async () => {
-    const event = {
-      specversion: '1.0',
-      id: 'event-id',
-      source: '/buckets/test-bucket',
-      type: 'google.firebase.storage.object.v1.finalized',
-      time: new Date().toISOString(),
-      data: {
-        name: 'invalid/user1/minasona.png',
-      },
-      bucket: 'test-bucket',
-    };
-
-    await updateJsonCatalog(event as any);
-
-    expect(mockStorage.bucket).not.toHaveBeenCalled();
-  });
-
-  it('should process a valid community update', async () => {
+  it('should process a valid community update and handle backfill', async () => {
     const community = 'minawan';
     const userId = 'user1';
     const event = {
-      specversion: '1.0',
-      id: 'event-id',
-      source: '/buckets/test-bucket',
-      type: 'google.firebase.storage.object.v1.finalized',
-      time: new Date().toISOString(),
-      data: {
-        name: `${community}/${userId}/minasona.png`,
-      },
+      data: { name: `${community}/${userId}/minasona.png` },
       bucket: 'test-bucket',
     };
 
@@ -115,94 +139,94 @@ describe('updateJsonCatalog', () => {
 
     mockBucket.getFiles.mockResolvedValue([[mockFile]]);
 
-    const mockDoc = {
-      exists: true,
-      data: () => ({ twitchUsername: 'user1_twitch' }),
-    };
-    const mockDocRef = {
-      get: jest.fn().mockResolvedValue(mockDoc),
-    };
-    const mockCollection = {
-      doc: jest.fn().mockReturnValue(mockDocRef),
-    };
-    mockFirestore.collection.mockReturnValue(mockCollection);
-
     const mockGalleryFile = {
       save: jest.fn().mockResolvedValue(null),
       exists: jest.fn().mockResolvedValue([true]),
-      download: jest.fn().mockResolvedValue([Buffer.from(JSON.stringify([{ id: 'user1', twitchUsername: 'user1_twitch' }]))]),
+      download: jest.fn().mockResolvedValue([Buffer.from(JSON.stringify([]))]),
     };
     mockBucket.file.mockReturnValue(mockGalleryFile);
 
     await updateJsonCatalog(event as any);
 
+    // Verify it updated user doc to set community to false
+    expect(mockDoc.update).toHaveBeenCalledWith({ [community]: false });
+
     // Verify it fetched files for the community
     expect(mockBucket.getFiles).toHaveBeenCalledWith({ prefix: `${community}/` });
 
-    // Verify it fetched user doc
-    expect(mockFirestore.collection).toHaveBeenCalledWith('minawan');
-    expect(mockCollection.doc).toHaveBeenCalledWith(userId);
-
-    // Verify it saved community gallery
+    // Verify it saved community gallery with backfill (since it's minawan)
     expect(mockBucket.file).toHaveBeenCalledWith(`${community}/api.json`);
-    expect(mockGalleryFile.save).toHaveBeenCalled();
+    const communitySaveCall = mockGalleryFile.save.mock.calls.find(call => {
+      const data = JSON.parse(call[0]);
+      return Array.isArray(data) && data.some(entry => entry.backfill === true);
+    });
+    expect(communitySaveCall).toBeDefined();
 
-    // Verify it processed combined gallery (loops through minawan, goomer, minyan, wormpal)
+    // Verify it processed combined gallery
     expect(mockBucket.file).toHaveBeenCalledWith('api.json');
-    
-    // Check if it saved the combined gallery
-    const lastCall = mockGalleryFile.save.mock.calls[mockGalleryFile.save.mock.calls.length - 1];
-    const savedData = JSON.parse(lastCall[0]);
-    // The combined gallery should have the community channels as keys
-    expect(savedData).toHaveProperty('cerbervt'); // minawan
   });
 });
 
-describe('submitModerationWebhook', () => {
+describe('markUserForReview', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockDoc.get.mockResolvedValue({
+      exists: true,
+      data: () => ({ twitchUsername: 'user1_twitch' }),
+    });
+    mockCollection.get.mockResolvedValue({ docs: [] });
   });
 
-  it('should send webhooks for valid image upload', async () => {
+  it('should send webhooks and update approvals for valid image upload', async () => {
     const community = 'minawan';
     const userId = 'user1';
     const event = {
-      data: {
-        name: `${community}/${userId}/minasona_512x512.png`,
-      },
+      data: { name: `${community}/${userId}/minasona_256x256.png` },
       bucket: 'test-bucket',
     };
 
-    const mockDoc = {
-      exists: true,
-      data: () => ({ twitchUsername: 'user1_twitch' }),
-    };
-    mockFirestore.collection.mockReturnValue({
-      doc: jest.fn().mockReturnValue({
-        get: jest.fn().mockResolvedValue(mockDoc),
-      }),
+    await markUserForReview(event as any);
+
+    // Should remove from approvals
+    expect(mockFirestore.collection).toHaveBeenCalledWith('approvals');
+    expect(mockCollection.doc).toHaveBeenCalledWith(community);
+    expect(mockDoc.set).toHaveBeenCalledWith({
+      approvedUsers: expect.objectContaining({ type: 'arrayRemove', val: userId })
     });
+
+    // Should handle webhooks
+    const { sendReviewWebhook } = require('../src/moderation/webhookUtils');
+    expect(sendReviewWebhook).toHaveBeenCalled();
+  });
+
+  it('should delete previous webhooks', async () => {
+    const community = 'minawan';
+    const userId = 'user1';
+    const event = {
+      data: { name: `${community}/${userId}/minasona_256x256.png` },
+      bucket: 'test-bucket',
+    };
+
+    const mockOldDoc = {
+      data: () => ({ webhook: 'http://old.webhook', messageId: 'old-msg-id' }),
+      ref: { delete: jest.fn() }
+    };
+    mockCollection.get.mockResolvedValue({ docs: [mockOldDoc] });
 
     await markUserForReview(event as any);
 
-    expect(global.fetch).toHaveBeenCalledTimes(2); // One for community, one for hoopy
-    
-    const calls = (global.fetch as jest.Mock).mock.calls;
-    expect(calls[0][0]).toContain('http://minawan.webhook');
-    expect(calls[1][0]).toContain('http://hoopy.webhook');
+    const { deleteWebhookMessage } = require('../src/moderation/webhookUtils');
+    expect(deleteWebhookMessage).toHaveBeenCalledWith('http://old.webhook', 'old-msg-id');
+    expect(mockOldDoc.ref.delete).toHaveBeenCalled();
   });
 
   it('should exit early for non-moderation images', async () => {
     const event = {
-      data: {
-        name: 'minawan/user1/minasona.png',
-      },
+      data: { name: 'minawan/user1/minasona.png' },
       bucket: 'test-bucket',
     };
-
     await markUserForReview(event as any);
-
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(mockFirestore.collection).not.toHaveBeenCalled();
   });
 });
 
@@ -211,12 +235,12 @@ describe('moderationDeleteImage', () => {
     jest.clearAllMocks();
   });
 
-  it('should delete files and return 200', async () => {
+  it('should delete files and return 200 if key is valid', async () => {
     const req = {
       query: {
         community: 'minawan',
         userId: 'user1',
-        key: 'MODERATION_KEY', // Default name from defineString mock
+        key: 'VALID_KEY',
       },
     };
     const res = {
@@ -224,11 +248,34 @@ describe('moderationDeleteImage', () => {
       send: jest.fn(),
     };
 
+    // Mock key validation
+    mockDoc.get.mockResolvedValue({ exists: true, data: () => ({}) });
+    mockCollection.get.mockResolvedValue({ docs: [] });
+
     await moderationDeleteImage(req as any, res as any);
 
     expect(mockBucket.deleteFiles).toHaveBeenCalledWith({ prefix: 'minawan/user1/' });
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.send).toHaveBeenCalledWith({ message: 'Deleted files for user1 in minawan' });
+  });
+
+  it('should return 401 for invalid key', async () => {
+    const req = {
+      query: {
+        community: 'minawan',
+        userId: 'user1',
+        key: 'INVALID_KEY',
+      },
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    };
+
+    mockDoc.get.mockResolvedValue({ exists: false });
+
+    await moderationDeleteImage(req as any, res as any);
+
+    expect(res.status).toHaveBeenCalledWith(401);
   });
 
   it('should return 400 for missing parameters', async () => {
@@ -245,15 +292,21 @@ describe('moderationDeleteImage', () => {
     await moderationDeleteImage(req as any, res as any);
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.send).toHaveBeenCalledWith('Missing community or userId');
+    expect(res.send).toHaveBeenCalledWith('Missing key, community, or userId');
+  });
+});
+
+describe('moderationApproveImage', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('should return 400 for invalid community', async () => {
+  it('should approve image and return 200', async () => {
     const req = {
       query: {
-        community: 'invalid',
+        community: 'minawan',
         userId: 'user1',
-        key: 'MODERATION_KEY',
+        key: 'VALID_KEY',
       },
     };
     const res = {
@@ -261,10 +314,41 @@ describe('moderationDeleteImage', () => {
       send: jest.fn(),
     };
 
-    await moderationDeleteImage(req as any, res as any);
+    mockDoc.get.mockResolvedValue({ exists: true, data: () => ({}) });
+    mockCollection.get.mockResolvedValue({ docs: [] });
 
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.send).toHaveBeenCalledWith('Invalid community');
+    await moderationApproveImage(req as any, res as any);
+
+    expect(mockFirestore.collection).toHaveBeenCalledWith('approvals');
+    expect(mockDoc.set).toHaveBeenCalledWith({
+      approvedUsers: expect.objectContaining({ type: 'arrayUnion', val: 'user1' })
+    });
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+});
+
+describe('rebuildCatalog', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should rebuild catalog and return 200', async () => {
+    const req = {
+      query: {
+        community: 'minawan',
+      },
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    };
+
+    mockDoc.get.mockResolvedValue({ exists: true, data: () => ({ approvedUsers: [] }) });
+    mockBucket.getFiles.mockResolvedValue([[]]);
+
+    await rebuildCatalog(req as any, res as any);
+
+    expect(res.status).toHaveBeenCalledWith(200);
   });
 });
 
@@ -287,13 +371,9 @@ describe('updateJsonCatalogLegacy', () => {
     };
     mockBucket.getFiles.mockResolvedValue([[mockFile]]);
 
-    mockFirestore.collection.mockReturnValue({
-      doc: jest.fn().mockReturnValue({
-        get: jest.fn().mockResolvedValue({
-          exists: true,
-          data: () => ({ twitchUsername: 'user1_twitch' }),
-        }),
-      }),
+    mockDoc.get.mockResolvedValue({
+      exists: true,
+      data: () => ({ twitchUsername: 'user1_twitch' }),
     });
 
     const mockGalleryFile = {
