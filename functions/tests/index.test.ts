@@ -45,7 +45,7 @@ global.fetch = jest.fn().mockResolvedValue({
 }) as jest.Mock;
 
 // Now import the functions
-import { updateJsonCatalog, submitModerationWebhook, moderationDeleteImage, updateJsonCatalogLegacy } from '../src/index';
+import { updateJsonCatalog, markUserForReview, moderationDeleteImage, updateJsonCatalogLegacy } from '../src/index';
 import { Community } from '../src/communities';
 
 const testEnv = fft();
@@ -183,7 +183,7 @@ describe('submitModerationWebhook', () => {
       }),
     });
 
-    await submitModerationWebhook(event as any);
+    await markUserForReview(event as any);
 
     expect(global.fetch).toHaveBeenCalledTimes(2); // One for community, one for hoopy
     
@@ -200,7 +200,7 @@ describe('submitModerationWebhook', () => {
       bucket: 'test-bucket',
     };
 
-    await submitModerationWebhook(event as any);
+    await markUserForReview(event as any);
 
     expect(global.fetch).not.toHaveBeenCalled();
   });
