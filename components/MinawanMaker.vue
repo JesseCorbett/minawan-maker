@@ -83,9 +83,12 @@ async function uploadMinasona(base64: string) {
   upload(blob);
 }
 
+const savingMinasona = ref(false);
 async function saveMinasona() {
   if (!dataUrl.value) return;
+  savingMinasona.value = true;
   await uploadMinasona(dataUrl.value);
+  setTimeout(() => savingMinasona.value = false, 1000);
 }
 </script>
 
