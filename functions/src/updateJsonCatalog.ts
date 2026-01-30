@@ -1,6 +1,7 @@
 import { onObjectFinalized } from 'firebase-functions/storage';
 import { getStorage } from "firebase-admin/storage";
 import { getFirestore } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 import { backfill } from './backfill';
 import { Community, communityChannels } from './communities';
 import { onRequest } from "firebase-functions/https";
@@ -31,6 +32,7 @@ export const updateJsonCatalog = onObjectFinalized({bucket: "minawan-pics.fireba
 export async function rebuildGallery(bucketName: string, community: Community) {
   const storage = getStorage();
   const db = getFirestore();
+  const auth = getAuth();
   const bucket = storage.bucket(bucketName);
 
   const approvalsDoc = await db.collection('approvals').doc(community).get();
@@ -55,6 +57,9 @@ export async function rebuildGallery(bucketName: string, community: Community) {
     const userDoc = await db.collection('minawan').doc(userId).get();
     const twitchUsername = userDoc.exists ? userDoc.data()?.twitchUsername : undefined;
 
+    const authUser = await auth.getUser(userId);
+    const discordId = authUser.providerData[0]?.uid;
+
     // Ensure minasona.png is public (assuming others are too as they are created together)
     const [isPublic] = await file.isPublic();
     if (!isPublic) {
@@ -67,6 +72,7 @@ export async function rebuildGallery(bucketName: string, community: Community) {
     const entry: any = {
       id: userId,
       twitchUsername,
+      discordId,
       approved: approvals.includes(userId) || false,
       original: getPublicUrl(bucketName, file.name),
       avif256: getPublicUrl(bucketName, `${community}/${userId}/minasona_256x256.avif`),
