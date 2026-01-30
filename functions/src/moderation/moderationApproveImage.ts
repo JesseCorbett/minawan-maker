@@ -1,6 +1,7 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { Community } from "../communities";
 import { getFirestore } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 import { rebuildGallery } from "../updateJsonCatalog";
 import { updateWebhookMessageToApproved } from "./webhookUtils";
 import { firestore } from "firebase-admin";
@@ -18,6 +19,7 @@ export const moderationApproveImage = onRequest(async (req, res) => {
     return;
   }
 
+  const auth = getAuth();
   const db = getFirestore();
   const webhookDocRef = db.collection('minawan').doc(userId as string).collection(`${community}-webhooks`).doc(key as string);
   const webhookDoc = await webhookDocRef.get();
@@ -28,7 +30,9 @@ export const moderationApproveImage = onRequest(async (req, res) => {
   }
 
   const user = await db.collection('minawan').doc(userId as string).get();
-  const twitchUsername: string = user.exists ? user.data()?.twitchUsername : `🔴 Unlinked user (${userId})`;
+  let twitchUsername: string = user.exists
+    ? user.data()?.twitchUsername
+    : `🔴 Unlinked user (Discord ID ${(await auth.getUser(userId as string)).providerData[0]?.uid})`;
 
   const approvalsDoc = db.collection('approvals').doc(community as Community);
   await approvalsDoc.set({
