@@ -49,7 +49,7 @@ export const markUserForReview = onObjectFinalized({bucket: "minawan-pics.fireba
   const approvalsDoc = db.collection('approvals').doc(community);
   await approvalsDoc.set({
     approvedUsers: firestore.FieldValue.arrayRemove(userId)
-  });
+  }, { merge: true });
 
   const hoopyWebhookDoc = await createWebhookDoc(db, userId, community, hoopyWebhook.value(), event.data.name);
   const hoopyWebhookId = await sendReviewWebhook(hoopyWebhook.value(), community, event.data.name, twitchUsername, userId, hoopyWebhookDoc.id);

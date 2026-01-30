@@ -28,12 +28,12 @@ export const moderationApproveImage = onRequest(async (req, res) => {
   }
 
   const user = await db.collection('minawan').doc(userId as string).get();
-  const twitchUsername: string = user.exists ? user.data()?.twitchUsername : `Unknown user (${userId})`;
+  const twitchUsername: string = user.exists ? user.data()?.twitchUsername : `🔴 Unlinked user (${userId})`;
 
   const approvalsDoc = db.collection('approvals').doc(community as Community);
   await approvalsDoc.set({
     approvedUsers: firestore.FieldValue.arrayUnion(userId)
-  });
+  }, { merge: true });
 
   await rebuildGallery("minawan-pics.firebasestorage.app", community as Community);
 
