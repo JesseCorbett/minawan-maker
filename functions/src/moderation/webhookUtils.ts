@@ -25,7 +25,7 @@ export async function sendReviewWebhook(
           "components": [
             {
               "type": 10,
-              "content": `User ${user} uploaded a ${community}`
+              "content": `${user} uploaded a ${community}`
             },
             {
               "type": 12,
@@ -92,7 +92,7 @@ export async function updateWebhookMessageToApproved(
           "components": [
             {
               "type": 10,
-              "content": `User ${user} uploaded a ${community}`
+              "content": `${user} uploaded a ${community}`
             },
             {
               "type": 12,

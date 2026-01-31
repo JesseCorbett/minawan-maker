@@ -4,6 +4,7 @@ import { getFirestore, Firestore } from "firebase-admin/firestore";
 import { Community } from "../communities";
 import { sendReviewWebhook, deleteWebhookMessage } from "./webhookUtils";
 import { firestore } from "firebase-admin";
+import { getAuth } from "firebase-admin/auth";
 
 const hoopyWebhook = defineString('HOOPY_WEBHOOK');
 
@@ -31,9 +32,12 @@ export const markUserForReview = onObjectFinalized({bucket: "minawan-pics.fireba
   if (fileName !== 'minasona_256x256.png') return;
   if (!Object.values(Community).includes(community)) return;
 
+  const auth = getAuth();
   const db = getFirestore();
   const userDoc = await db.collection('minawan').doc(userId).get();
-  const twitchUsername: string = userDoc.exists ? userDoc.data()?.twitchUsername : `Unknown user (${userId})`;
+  let twitchUsername: string = userDoc.exists
+    ? userDoc.data()?.twitchUsername
+    : `🔴 Unlinked user (Discord ID ${(await auth.getUser(userId as string)).providerData[0]?.uid})`;
 
   const previous = await db.collection('minawan').doc(userId).collection(`${community}-webhooks`).get();
   for (let doc of previous.docs) {
