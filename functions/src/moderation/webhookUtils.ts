@@ -8,7 +8,8 @@ export async function sendReviewWebhook(
   url: string,
   community: Community,
   filename: string,
-  user: string,
+  discordId: string,
+  twitchUsername: string,
   userId: string,
   moderationKey: string
 ) {
@@ -25,7 +26,7 @@ export async function sendReviewWebhook(
           "components": [
             {
               "type": 10,
-              "content": `${user} uploaded a ${community}`
+              "content": `New ${community} upload\nTwitch: ${twitchUsername}\nDiscord: <@${discordId}> (${discordId})`
             },
             {
               "type": 12,
@@ -75,7 +76,8 @@ export async function updateWebhookMessageToApproved(
   messageId: string,
   community: Community,
   filename: string,
-  user: string,
+  discordId: string,
+  twitchUsername: string,
   userId: string,
   moderationKey: string
 ) {
@@ -92,7 +94,7 @@ export async function updateWebhookMessageToApproved(
           "components": [
             {
               "type": 10,
-              "content": `${user} uploaded a ${community}`
+              "content": `New ${community} upload\nTwitch: ${twitchUsername}\nDiscord: <@${discordId}> (${discordId})`
             },
             {
               "type": 12,

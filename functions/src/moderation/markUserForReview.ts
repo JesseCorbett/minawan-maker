@@ -35,9 +35,8 @@ export const markUserForReview = onObjectFinalized({bucket: "minawan-pics.fireba
   const auth = getAuth();
   const db = getFirestore();
   const userDoc = await db.collection('minawan').doc(userId).get();
-  let twitchUsername: string = userDoc.exists
-    ? userDoc.data()?.twitchUsername
-    : `🔴 Unlinked user (Discord ID ${(await auth.getUser(userId as string)).providerData[0]?.uid})`;
+  const twitchUsername: string = userDoc.exists ? userDoc.data()?.twitchUsername : `🔴 Unlinked`;
+  const discordId = (await auth.getUser(userId as string)).providerData[0]?.uid;
 
   const previous = await db.collection('minawan').doc(userId).collection(`${community}-webhooks`).get();
   for (let doc of previous.docs) {
@@ -56,13 +55,13 @@ export const markUserForReview = onObjectFinalized({bucket: "minawan-pics.fireba
   }, { merge: true });
 
   const hoopyWebhookDoc = await createWebhookDoc(db, userId, community, hoopyWebhook.value(), event.data.name);
-  const hoopyWebhookId = await sendReviewWebhook(hoopyWebhook.value(), community, event.data.name, twitchUsername, userId, hoopyWebhookDoc.id);
+  const hoopyWebhookId = await sendReviewWebhook(hoopyWebhook.value(), community, event.data.name, discordId, twitchUsername, userId, hoopyWebhookDoc.id);
   await hoopyWebhookDoc.update({ messageId: hoopyWebhookId });
 
   const communityWebhook = communityWebhooks[community].value();
   if (communityWebhook && communityWebhook !== hoopyWebhook.value()) {
     const modWebhookDoc = await createWebhookDoc(db, userId, community, communityWebhook, event.data.name);
-    const modWebhookId = await sendReviewWebhook(communityWebhook, community, event.data.name, twitchUsername, userId, modWebhookDoc.id);
+    const modWebhookId = await sendReviewWebhook(communityWebhook, community, event.data.name, discordId, twitchUsername, userId, modWebhookDoc.id);
     await modWebhookDoc.update({ messageId: modWebhookId });
   }
 });

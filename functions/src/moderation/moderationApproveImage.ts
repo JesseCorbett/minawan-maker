@@ -30,9 +30,8 @@ export const moderationApproveImage = onRequest(async (req, res) => {
   }
 
   const user = await db.collection('minawan').doc(userId as string).get();
-  let twitchUsername: string = user.exists
-    ? user.data()?.twitchUsername
-    : `🔴 Unlinked user (Discord ID ${(await auth.getUser(userId as string)).providerData[0]?.uid})`;
+  const twitchUsername: string = user.exists ? user.data()?.twitchUsername : `🔴 Unlinked`;
+  const discordId = (await auth.getUser(userId as string)).providerData[0]?.uid;
 
   const approvalsDoc = db.collection('approvals').doc(community as Community);
   await approvalsDoc.set({
@@ -48,7 +47,7 @@ export const moderationApproveImage = onRequest(async (req, res) => {
     const previousWebhookId = data.messageId;
     if (previousWebhook && previousWebhookId) {
       try {
-        await updateWebhookMessageToApproved(previousWebhook, previousWebhookId, community as Community, data.image, twitchUsername, userId as string, key as string)
+        await updateWebhookMessageToApproved(previousWebhook, previousWebhookId, community as Community, data.image, discordId, twitchUsername, userId as string, key as string)
       } catch (e) {
         console.error('Failed to update webhook message', e)
       }
