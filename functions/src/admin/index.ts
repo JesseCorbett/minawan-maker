@@ -29,7 +29,7 @@ export const approveAll = onRequest(async (req, res) => {
     if (unapproved.length === 0) continue;
     touchedCommunities.push(community as Community);
     await db.collection('approvals').doc(community).set({
-      approvedUsers: firestore.FieldValue.arrayUnion(unapproved)
+      approvedUsers: firestore.FieldValue.arrayUnion(...unapproved)
     }, { merge: true });
   }
 
