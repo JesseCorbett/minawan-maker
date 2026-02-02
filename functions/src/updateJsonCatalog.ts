@@ -107,6 +107,7 @@ export async function rebuildGallery(bucketName: string, community: Community) {
     const wormpalBackfill = [
       { twitchUsername: 'gomi', minasonaName: 'wormigomi' },
       { twitchUsername: 'unbreakabledoof', minasonaName: 'unbreakabledoof' },
+      { twitchUsername: 'alexvoid', minasonaName: 'alex_void' },
     ];
     for (const backfillEntry of wormpalBackfill) {
       if (!catalog.some((entry) => entry.twitchUsername === backfillEntry.twitchUsername)) {
