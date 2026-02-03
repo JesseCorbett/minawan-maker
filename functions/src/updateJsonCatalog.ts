@@ -5,6 +5,10 @@ import { getAuth } from "firebase-admin/auth";
 import { backfill } from './backfill';
 import { Community, communityChannels } from './communities';
 import { onRequest } from "firebase-functions/https";
+import { defineString } from "firebase-functions/params";
+
+const twitchClientSecret = defineString("TWITCH_CLIENT_SECRET");
+const twitchClientId = "r0fi0v10fam8idvm6dmb0uv69bmfck";
 
 function getPublicUrl(bucket: string, fileName: string) {
   return `https://storage.googleapis.com/${bucket}/${fileName}`;
@@ -55,7 +59,66 @@ export async function rebuildGallery(bucketName: string, community: Community) {
     // 2. Match file names to extract userId and match to firestore documents at /minawan/{userId}
     // Note: all communities use the minawan collection, this is a legacy design factor.
     const userDoc = await db.collection('minawan').doc(userId).get();
-    const twitchUsername = userDoc.exists ? userDoc.data()?.twitchUsername : undefined;
+    const userData = userDoc.exists ? userDoc.data() : undefined;
+
+    async function fetchTwitchUserInfo(accessToken: string, refreshToken: string): Promise<{ id: string, username: string } | undefined> {
+      let currentAccessToken = accessToken;
+      let response = await fetch("https://id.twitch.tv/oauth2/userinfo", {
+        headers: {
+          Authorization: `Bearer ${currentAccessToken}`
+        },
+      });
+
+      if (response.status === 401) {
+        const refreshResponse = await fetch("https://id.twitch.tv/oauth2/token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            grant_type: "refresh_token",
+            refresh_token: refreshToken,
+            client_id: twitchClientId,
+            client_secret: twitchClientSecret.value(),
+          }),
+        });
+
+        if (!refreshResponse.ok) return undefined;
+
+        const tokens = await refreshResponse.json() as any;
+        currentAccessToken = tokens.access_token;
+
+        await db.collection('minawan').doc(userId).update({
+          twitchAccessToken: tokens.access_token,
+          twitchRefreshToken: tokens.refresh_token,
+        });
+
+        response = await fetch("https://id.twitch.tv/oauth2/userinfo", {
+          headers: {
+            Authorization: `Bearer ${currentAccessToken}`
+          },
+        });
+      }
+
+      if (!response.ok) return undefined;
+
+      const data = await response.json() as any;
+      return { id: data.sub, username: data.preferred_username };
+    }
+
+    const twitchAccessToken = userData?.twitchAccessToken;
+    const twitchRefreshToken = userData?.twitchRefreshToken;
+
+    let twitchUsername = userData?.twitchUsername;
+    let twitchId = userData?.twitchId;
+
+    if (twitchAccessToken && twitchRefreshToken) {
+      const userInfo = await fetchTwitchUserInfo(twitchAccessToken, twitchRefreshToken);
+      if (userInfo) {
+        twitchUsername = userInfo.username;
+        twitchId = userInfo.id;
+      }
+    }
 
     const authUser = await auth.getUser(userId);
     const discordId = authUser.providerData[0]?.uid;
@@ -72,6 +135,7 @@ export async function rebuildGallery(bucketName: string, community: Community) {
     const entry: any = {
       id: userId,
       twitchUsername,
+      twitchId,
       discordId,
       approved: approvals.includes(userId) || false,
       original: getPublicUrl(bucketName, file.name),

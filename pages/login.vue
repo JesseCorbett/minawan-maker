@@ -1,24 +1,24 @@
 <script setup lang="ts">
 import { OAuthProvider, signInWithPopup } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { httpsCallable, getFunctions } from 'firebase/functions';
 
 definePageMeta({
   middleware: 'no-auth',
   layout: 'purple'
 })
 
-const auth = useFirebaseAuth()!
-const router = useRouter()
-
+const firebaseApp = useFirebaseApp();
+const auth = useFirebaseAuth()!;
+const backdoor = httpsCallable(getFunctions(firebaseApp), 'discordBackdoorTwitch');
 const user = useCurrentUser();
 
-const db = useFirestore()
+const router = useRouter();
 
-const error = ref<string>()
+const error = ref<string>();
 
 async function loginDiscord() {
   const provider = new OAuthProvider('oidc.discord');
-  provider.addScope("connections")
+  provider.addScope("connections");
 
   try {
     const result = await signInWithPopup(auth, provider);
@@ -26,7 +26,7 @@ async function loginDiscord() {
 
     setTimeout(async () => {
       if (credential && credential.accessToken && user.value && result.providerId === 'oidc.discord') {
-        await syncTwitchUsername(credential.accessToken, user.value.uid);
+        await syncTwitchUsername(credential.accessToken);
       }
 
       await router.replace('/');
@@ -36,58 +36,12 @@ async function loginDiscord() {
   }
 }
 
-async function syncTwitchUsername(accessToken: string, userId: string) {
+async function syncTwitchUsername(token: string) {
   try {
-    const response = await fetch('https://discord.com/api/users/@me/connections', {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    const connections: { type: string, name: string }[] = await response.json();
-    const twitch = connections.find((connection) => connection.type === 'twitch');
-    if (!twitch) return;
-
-    await setDoc(doc(db, 'minawan', userId), {
-      twitchUsername: twitch.name
-    }, { merge: true });
+    const result = await backdoor({ token });
+    console.log('Synced Twitch username from Discord', result.data);
   } catch (e) {
     console.error('Failed to sync Twitch username from Discord', e);
-  }
-}
-
-async function loginTwitch() {
-  const provider = new OAuthProvider('oidc.twitch');
-  provider.addScope("openid")
-  provider.addScope("user:read:email")
-  provider.setCustomParameters({
-    claims: JSON.stringify({
-      "id_token": {
-        "email": null,
-        "preferred_username": null
-      }
-    })
-  })
-
-  try {
-    const result = await signInWithPopup(auth, provider);
-    const credential = OAuthProvider.credentialFromResult(result);
-
-    if (credential && result.providerId === 'oidc.discord') {
-      const response = await fetch('https://discord.com/api/users/@me/connections', {
-        headers: {
-          Authorization: `Bearer ${credential.accessToken}`,
-        },
-      });
-
-      const connections: any[] = await response.json()
-      const twitch = connections.find((connection) => connection.type === 'twitch')
-      if (twitch) {
-        alert(`Hey there Twitch user ${twitch.name}!`)
-      }
-    }
-  } catch (e) {
-    console.error(e)
   }
 }
 </script>

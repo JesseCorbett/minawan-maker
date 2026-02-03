@@ -8,4 +8,5 @@ setGlobalOptions({maxInstances: 1});
 export * from './updateJsonCatalog';
 export * from './moderation';
 export * from './admin';
+export * from './twitch';
 export * from './updateJsonCatalogLegacy';
