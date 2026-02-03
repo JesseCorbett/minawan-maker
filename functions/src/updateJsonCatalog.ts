@@ -117,6 +117,7 @@ export async function rebuildGallery(bucketName: string, community: Community) {
       if (userInfo) {
         twitchUsername = userInfo.username;
         twitchId = userInfo.id;
+        await db.collection('minawan').doc(userId).set({ twitchUsername, twitchId }, { merge: true });
       }
     }
 
