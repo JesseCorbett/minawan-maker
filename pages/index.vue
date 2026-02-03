@@ -43,6 +43,12 @@ async function checkFileInput(event: InputEvent) {
   reader.readAsDataURL(file);
 
 }
+
+const linkTwitchLink = computed(() => {
+  const userId = user.value?.uid;
+  if (!userId) return;
+  return `https://id.twitch.tv/oauth2/authorize?client_id=r0fi0v10fam8idvm6dmb0uv69bmfck&response_type=code&state=${userId}&scope=openid&redirect_uri=https://us-central1-minawan-pics.cloudfunctions.net/authenticateTwitch`
+});
 </script>
 
 <template>
@@ -57,6 +63,7 @@ async function checkFileInput(event: InputEvent) {
           accept="image/png,image/jpeg,image/webp,image/avif"
           style="display: none"
           @change="checkFileInput"/>
+      <a v-if="linkTwitchLink" :href="linkTwitchLink" target="link-twitch">Sync <img src="~/assets/twitch.svg" alt="Twitch Logo" width="16" height="16"/></a>
       <NuxtLink v-if="!user" to="/login">Login</NuxtLink>
       <div v-if="!!user" id="logout" @click="logout">Logout</div>
     </div>
@@ -100,6 +107,7 @@ async function checkFileInput(event: InputEvent) {
 }
 
 #links > * {
+  cursor: pointer;
   text-decoration: none;
   background-color: var(--cerb-dark);
   color: white;
@@ -109,8 +117,10 @@ async function checkFileInput(event: InputEvent) {
   padding: 4px 6px;
   border: 4px solid var(--cerb-dark);
   border-radius: 12px;
-  cursor: pointer;
   user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 #links > *:hover {
