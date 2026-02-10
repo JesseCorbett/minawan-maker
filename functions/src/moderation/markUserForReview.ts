@@ -12,7 +12,8 @@ const communityWebhooks: { [key in Community]: StringParam } = {
   minawan: defineString('MINAWAN_WEBHOOK'),
   goomer: defineString('GOOMER_WEBHOOK'),
   minyan: defineString('MINYAN_WEBHOOK'),
-  wormpal: defineString('WORMPAL_WEBHOOK')
+  wormpal: defineString('WORMPAL_WEBHOOK'),
+  shoominion: defineString('SHOOMINION_WEBHOOK'),
 };
 
 async function createWebhookDoc(db: Firestore, userId: string, community: Community, webhook: string, image: string) {
