@@ -219,7 +219,6 @@ export const backfill = [
   { "twitchUsername": "reddpal_", "minasonaName": "Reddpalwan" },
   { "twitchUsername": "sgtredskull", "minasonaName": "RedSkullWan" },
   { "twitchUsername": "reecion", "minasonaName": "reecionwan" },
-  { "twitchUsername": "renegade_v", "minasonaName": "renegadewan" },
   { "twitchUsername": "shipmasterrevan", "minasonaName": "Revanwan" },
   { "twitchUsername": "riyokaeri", "minasonaName": "Riyowan" },
   { "twitchUsername": "robert12465", "minasonaName": "Robertwan" },
