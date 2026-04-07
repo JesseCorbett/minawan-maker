@@ -199,7 +199,7 @@ async function saveMinasona() {
     </div>
     <div id="save">
       <a :href="dataUrl" download="minasona.png">Download</a>
-      <a v-if="!!user" @click="saveMinasona">{{ uploadProgress ? uploadProgress === 1 ? 'Upload Complete' : `Uploaded ${Math.ceil(uploadProgress * 100)}%` : 'Set as minasona' }}</a>
+      <a v-if="!!user" @click="saveMinasona">{{ uploadProgress ? uploadProgress === 1 ? 'Upload Complete' : `Uploaded ${Math.ceil(uploadProgress * 100)}%` : 'Use as minasona' }}</a>
     </div>
   </div>
 </template>

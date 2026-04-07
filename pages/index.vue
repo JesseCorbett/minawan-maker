@@ -56,7 +56,7 @@ const linkTwitchLink = computed(() => {
     <h1>Make a Minawan!!</h1>
     <div id="links">
       <NuxtLink id="to-gallery" to="/gallery">View Minawan Gallery</NuxtLink>
-      <label v-if="!!user" for="upload-minawan-file">{{ uploadProgress ? uploadProgress === 1 ? 'Upload Complete' : `Uploaded ${Math.ceil(uploadProgress * 100)}%` : 'Upload Minasona' }}</label>
+      <label v-if="!!user" for="upload-minawan-file">{{ uploadProgress ? uploadProgress === 1 ? 'Upload Complete' : `Uploaded ${Math.ceil(uploadProgress * 100)}%` : 'Upload Custom Minasona' }}</label>
       <input
           id="upload-minawan-file"
           type="file"
@@ -67,6 +67,7 @@ const linkTwitchLink = computed(() => {
       <NuxtLink v-if="!user" to="/login">Login</NuxtLink>
       <div v-if="!!user" id="logout" @click="logout">Logout</div>
     </div>
+    <div id="upload-note" v-if="!!user && uploadProgress">Note: Mods will review all uploads to prevent abuse and ensure your minasona is stream appropriate.</div>
     <MinawanMaker
         body-light="#b8a099"
         body-shaded="#a18981"
@@ -134,6 +135,17 @@ const linkTwitchLink = computed(() => {
 
 #logout:hover {
   background: white;
+}
+
+#upload-note {
+  font-size: 16px;
+  color: var(--cerb-light);
+  font-family: sans-serif;
+  padding: 8px;
+  background: var(--yellow);
+  border-radius: 8px;
+  border: 2px solid var(--cerb-light);
+  margin: 0 0 16px;
 }
 
 #credit {
