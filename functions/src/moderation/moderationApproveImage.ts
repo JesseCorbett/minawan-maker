@@ -2,9 +2,10 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { Community } from "../communities";
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
-import { rebuildGallery } from "../updateJsonCatalog";
+import { rebuildGallery, updateCommunityCatalog } from "../updateJsonCatalog";
 import { updateWebhookMessageToApproved } from "./webhookUtils";
 import { firestore } from "firebase-admin";
+import { getStorage } from "firebase-admin/storage";
 
 export const moderationApproveImage = onRequest(async (req, res) => {
   const { community, userId, key } = req.query;
@@ -21,6 +22,8 @@ export const moderationApproveImage = onRequest(async (req, res) => {
 
   const auth = getAuth();
   const db = getFirestore();
+  const storage = getStorage();
+  const bucket = storage.bucket("minawan-pics.firebasestorage.app");
   const webhookDocRef = db.collection('minawan').doc(userId as string).collection(`${community}-webhooks`).doc(key as string);
   const webhookDoc = await webhookDocRef.get();
 
@@ -33,13 +36,29 @@ export const moderationApproveImage = onRequest(async (req, res) => {
   const twitchUsername: string = user.exists ? user.data()?.twitchUsername : `🔴 Unlinked`;
   const discordId = (await auth.getUser(userId as string)).providerData[0]?.uid;
 
+  // Mark the palsona as approved
   const approvalsDoc = db.collection('approvals').doc(community as Community);
   await approvalsDoc.set({
     approvedUsers: firestore.FieldValue.arrayUnion(userId)
   }, { merge: true });
 
-  await rebuildGallery("minawan-pics.firebasestorage.app", community as Community);
+  const galleryFile = bucket.file(`${community}/api.json`);
+  const [galleryFileExists] = await galleryFile.exists();
+  if (galleryFileExists) {
+    const [contents] = await galleryFile.download();
+    const catalog = JSON.parse(contents.toString());
+    const entry = catalog.find((entry: any) => entry.id === userId);
+    if (entry) {
+      entry.approved = true;
+      await updateCommunityCatalog("minawan-pics.firebasestorage.app", community as Community, catalog);
+    } else {
+      await rebuildGallery("minawan-pics.firebasestorage.app", community as Community);
+    }
+  } else {
+    await rebuildGallery("minawan-pics.firebasestorage.app", community as Community);
+  }
 
+  // Update the webhooks
   const previous = await db.collection('minawan').doc(userId as string).collection(`${community}-webhooks`).get();
   for (let doc of previous.docs) {
     const data = doc.data();

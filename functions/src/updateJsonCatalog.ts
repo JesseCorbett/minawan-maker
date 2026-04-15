@@ -193,8 +193,16 @@ export async function rebuildGallery(bucketName: string, community: Community) {
     }
   }
 
-  // 4. Upload the JSON file to the bucket at /{community}/api.json
-  const galleryFile = bucket.file(`${community}/api.json`)
+  // 4. Rebuild the catalogs
+  await updateCommunityCatalog(bucketName, community, catalog);
+}
+
+export async function updateCommunityCatalog(bucketName: string, community: Community, catalog: any[]) {
+  const storage = getStorage();
+  const bucket = storage.bucket(bucketName);
+
+  // 1. Upload the JSON file to the bucket at /{community}/api.json
+  const galleryFile = bucket.file(`${community}/api.json`);
   await galleryFile.save(JSON.stringify(catalog), {
     contentType: 'application/json',
     public: true,
@@ -203,7 +211,7 @@ export async function rebuildGallery(bucketName: string, community: Community) {
     }
   });
 
-  // 5. Fetch all community api.json files and compose them into a root api.json
+  // 2. Fetch all community api.json files and compose them into a root api.json
   const combinedGalleries: { [key: string]: any[] } = {};
 
   for (const comm of Object.values(Community)) {
@@ -221,7 +229,7 @@ export async function rebuildGallery(bucketName: string, community: Community) {
     }
   }
 
-  // 6. Upload the combined api.json to the root of the bucket
+  // 3. Upload the combined api.json to the root of the bucket
   const rootGalleryFile = bucket.file('api.json');
   await rootGalleryFile.save(JSON.stringify(combinedGalleries), {
     contentType: 'application/json',
