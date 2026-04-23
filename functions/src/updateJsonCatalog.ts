@@ -103,7 +103,25 @@ export async function rebuildGallery(bucketName: string, community: Community) {
       if (!response.ok) return undefined;
 
       const data = await response.json() as any;
-      return { id: data.sub, username: data.preferred_username };
+      let username: string = data.preferred_username;
+
+      try {
+        const response = await fetch('https://api.twitch.tv/helix/users', {
+          headers: {
+            Authorization: `Bearer ${currentAccessToken}`,
+            'Client-Id': twitchClientId,
+          }
+        });
+        const twitchData = await response.json() as any;
+        const login = twitchData.data[0]?.login as string | undefined;
+        if (login) {
+          username = login;
+        }
+      } catch (e) {
+        console.error('Failed to fetch twitch user info from helix API', e);
+      }
+
+      return { id: data.sub, username };
     }
 
     const twitchAccessToken = userData?.twitchAccessToken;
